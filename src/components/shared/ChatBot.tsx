@@ -35,8 +35,16 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -134,6 +142,17 @@ export default function ChatBot() {
             </a>
           );
         }
+        // Phone numbers - clickable on mobile only
+        if (isMobile) {
+          const phoneParts = part.split(/(\b01[3-9]\d{8}\b|\+?880[ -]?1[3-9]\d{8})/g);
+          return <span key={pi}>{phoneParts.map((pp, ppi) => {
+            const digits = pp.replace(/\D/g, '');
+            if (digits.length >= 11 && digits.startsWith('01')) {
+              return <a key={ppi} href={`tel:${digits}`} className="text-accent font-semibold underline">{pp}</a>;
+            }
+            return pp;
+          })}</span>;
+        }
         return <span key={pi}>{part}</span>;
       });
       if (line.startsWith("- ") || line.match(/^[✅⚠️📐📊📋🏗️✨🏠🏛️📸📅📍📞📧💬👷🎨💡🎯🔍📝🔧]/)) {
@@ -144,7 +163,7 @@ export default function ChatBot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-3 max-h-[calc(100vh-100px)]">
       {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
@@ -154,7 +173,7 @@ export default function ChatBot() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ height: "520px" }}
+            style={{ height: isMobile ? "70vh" : "520px", maxHeight: isMobile ? "70vh" : "520px" }}
           >
             {/* Header */}
             <div className="bg-primary px-4 py-3 flex items-center gap-3 shrink-0">
