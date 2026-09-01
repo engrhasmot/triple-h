@@ -115,11 +115,6 @@ export default function Footer() {
           <p className="text-xs text-primary-foreground/60 text-center md:text-left">
             &copy; {currentYear} TRIPLE H Plandraft &amp; Engineering. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/login" prefetch={false} className="text-xs text-primary-foreground/40 hover:text-accent transition-colors">
-              Admin Login
-            </Link>
-          </div>
         </div>
       </div>
     </footer>
