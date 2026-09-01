@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ExternalLink, Globe, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import SEOHead from "@/components/shared/SEOHead";
 import {
   Dialog,
   DialogTrigger,
@@ -62,6 +63,7 @@ export default function TeamPage() {
 
   return (
     <div className="w-full">
+      <SEOHead title="Our Team" description="TRIPLE H এর অভিজ্ঞ ইঞ্জিনিয়ার ও আর্কিটেক্ট টিম সম্পর্কে জানুন।" />
       <section className="bg-primary pt-32 pb-20 text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}

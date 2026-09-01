@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import SEOHead from "@/components/shared/SEOHead";
 
 const BookingForm = dynamic(() => import("@/components/booking/BookingForm"), {
   loading: () => (
@@ -14,6 +15,7 @@ const BookingForm = dynamic(() => import("@/components/booking/BookingForm"), {
 export default function BookAppointmentPage() {
   return (
     <div className="w-full">
+      <SEOHead title="Book Appointment" description="ইঞ্জিনিয়ার বা আর্কিটেক্টের সাথে অ্যাপয়েন্টমেন্ট বুক করুন।" />
       <section className="bg-primary pt-32 pb-20 text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}

@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Payment from '@/models/payment.model';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 
 async function checkAuth(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
-  return verifyToken(token);
+  const payload = await verifyToken(token);
+  if (!payload) return null;
+  if (!hasPermission((payload as any).role, 'canManagePayments')) return null;
+  return payload;
 }
 
 // GET — list all payments with optional filters

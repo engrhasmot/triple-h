@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HelpCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import SEOHead from "@/components/shared/SEOHead";
 
 interface FaqItem {
   _id: string;
@@ -87,6 +88,7 @@ export default function FaqPage() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <SEOHead title="FAQ" description="প্ল্যান ড্রাফটিং, রাজুক অনুমোদন ও ইঞ্জিনিয়ারিং সেবা সম্পর্কে সাধারণ প্রশ্নোত্তর।" />
       {/* Hero */}
       <section className="bg-primary pt-32 pb-16 text-center px-4">
         <motion.div

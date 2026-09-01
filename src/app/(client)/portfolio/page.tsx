@@ -7,6 +7,7 @@ import { Loader2, X, ZoomIn, MapPin, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageSlider from "@/components/portfolio/ImageSlider";
 import dynamic from "next/dynamic";
+import SEOHead from "@/components/shared/SEOHead";
 
 const ProjectMap = dynamic(() => import("@/components/portfolio/ProjectMap"), { ssr: false, loading: () => <div className="h-[420px] bg-muted animate-pulse rounded-2xl" /> });
 
@@ -39,6 +40,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <SEOHead title="Portfolio" description="আমাদের সম্পন্ন প্রকল্পগুলো দেখুন - Residential, Commercial, Industrial ও Government projects।" />
       
       {/* Header */}
       <section className="bg-primary pt-32 pb-16 text-center px-4">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import SEOHead from "@/components/shared/SEOHead";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -49,6 +50,7 @@ export default function ContactPage() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <SEOHead title="Contact" description="যোগাযোগ করুন। অ্যাপয়েন্টমেন্ট বুক করুন বা আমাদের অফিসে আসুন।" />
       {/* Header */}
       <section className="bg-primary pt-32 pb-16 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold font-heading text-primary-foreground mb-6">

@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AboutHero, AboutStory, AboutWhyChoose, AboutCTA } from "./AboutContent";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description: "TRIPLE H PLANDRAFT & ENGINEERING সম্পর্কে জানুন। আমাদের অভিজ্ঞতা, সেবা ও মূল্যবোধ।",
+};
 
 export default function AboutPage() {
   return (

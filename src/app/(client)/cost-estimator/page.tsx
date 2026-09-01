@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, BarChart3, Headset, ShieldCheck } from "lucide-react";
 import WhatsAppIcon from "@/components/shared/WhatsAppIcon";
 import dynamic from "next/dynamic";
+import SEOHead from "@/components/shared/SEOHead";
 
 const CostEstimator = dynamic(() => import("@/components/estimator/CostEstimator"), {
   loading: () => (
@@ -22,6 +23,7 @@ const trustBadges = [
 export default function CostEstimatorPage() {
   return (
     <div className="w-full">
+      <SEOHead title="Cost Estimator" description="আপনার বাড়ির নির্মাণ খরচের একটি বিনামূল্যের অনুমান পান। Instant cost breakdown পান।" />
       {/* Hero */}
       <section className="bg-primary pt-32 pb-20 text-center px-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none"

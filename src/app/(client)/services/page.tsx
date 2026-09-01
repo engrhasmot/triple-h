@@ -1,5 +1,11 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ServicesHero, ServicesList } from "./ServicesContent";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Services",
+  description: "2D/3D Plan Drafting, Architectural Design, Rajuk Approval, BOQ ও Site Supervision সেবা।",
+};
 
 export default function ServicesPage() {
   return (

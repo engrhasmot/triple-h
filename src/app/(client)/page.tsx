@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef, Suspense } from "react";
 import { SITE_CONFIG } from "@/lib/constants";
+import SEOHead from "@/components/shared/SEOHead";
 import dynamic from "next/dynamic";
 
 const TestimonialCarousel = dynamic(() => import("@/components/testimonials/TestimonialCarousel"), {
@@ -74,6 +75,10 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-col w-full">
+      <SEOHead
+        title="TRIPLE H PLANDRAFT & ENGINEERING"
+        description="2D/3D Plan Drafting, Architectural Design, Rajuk Approval & Engineering Services in Bangladesh. Free cost estimator & plan tracking."
+      />
       {/* --- HERO SECTION --- */}
       <section className="relative w-full min-h-[90vh] flex items-center justify-center overflow-hidden bg-primary">
         {/* Blueprint Grid Background */}

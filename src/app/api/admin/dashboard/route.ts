@@ -1,11 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Inquiry from '@/models/inquiry.model';
 import Project from '@/models/project.model';
 import PlanStatus from '@/models/plan-status.model';
 import Appointment from '@/models/appointment.model';
+import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 
-export async function GET() {
+async function checkAuth(req: NextRequest) {
+  const token = getTokenFromRequest(req);
+  if (!token) return null;
+  return verifyToken(token);
+}
+
+export async function GET(req: NextRequest) {
+  const payload = await checkAuth(req);
+  if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     await dbConnect();
 
@@ -50,7 +59,10 @@ export async function GET() {
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
+  const payload = await checkAuth(req);
+  if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { id, status } = await req.json();
     

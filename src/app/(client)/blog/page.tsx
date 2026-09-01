@@ -8,6 +8,7 @@ import { CalendarDays, User, ArrowRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import SEOHead from "@/components/shared/SEOHead";
 
 interface BlogPost {
   _id: string;
@@ -66,6 +67,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen">
+      <SEOHead title="Blog" description="বাংলাদেশের ভবন নির্মাণ, প্ল্যান ড্রাফটিং ও ইঞ্জিনিয়ারিং সম্পর্কে সংবাদ ও টিপস।" />
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>

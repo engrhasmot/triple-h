@@ -7,6 +7,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { Building2, Mail, MapPin, Phone, User, Loader2, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/shared/SEOHead";
 import {
   Form,
   FormControl,
@@ -91,6 +92,7 @@ export default function WorkOrderPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-12 bg-muted/30">
+      <SEOHead title="Work Order" description="ইঞ্জিনিয়ারিং ও আর্কিটেকচারাল সেবার জন্য অনলাইনে work order দিন।" />
       <div className="container max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Search, Loader2, FileText, CheckCircle2, Clock, AlertTriangle, FileX, MapPin, Download, FileDown, Phone, ChevronRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import SEOHead from "@/components/shared/SEOHead";
 
 interface PlanData {
   _id: string;
@@ -273,6 +274,7 @@ function TrackPlanContent() {
 
   return (
     <div className="w-full min-h-screen bg-background">
+      <SEOHead title="Track Plan Status" description="আপনার File ID অথবা ফোন নম্বর দিয়ে প্ল্যানের অবস্থা ট্র্যাক করুন।" />
       <section className="bg-primary pt-32 pb-16 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold font-heading text-primary-foreground mb-4">
           Track <span className="text-accent">Plan Status</span>
