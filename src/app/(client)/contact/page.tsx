@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Mail, Clock, CalendarDays } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, CalendarDays, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function ContactPage() {
     notes: ""
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [minDate] = useState(() => format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +35,7 @@ export default function ContactPage() {
       const json = await res.json();
       
       if (res.ok && json.success) {
-        toast.success("Appointment booked successfully! We will contact you soon.");
+        setShowSuccess(true);
         setFormData({ name: "", phone: "", email: "", appointmentType: "site-visit", date: "", timeSlot: "", location: "", notes: "" });
       } else {
         toast.error(json.error || "Failed to book appointment");
@@ -226,6 +227,36 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full text-center border border-border animate-in fade-in zoom-in duration-300 relative">
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold font-heading mb-3">Appointment Booked!</h2>
+            <p className="text-muted-foreground mb-2">
+              আপনার অ্যাপয়েন্টমেন্ট সফলভাবে বুক হয়েছে।
+            </p>
+            <p className="text-muted-foreground text-sm mb-8">
+              আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে। ধন্যবাদ!
+            </p>
+            <Button
+              onClick={() => setShowSuccess(false)}
+              className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg"
+            >
+              ঠিক আছে
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
