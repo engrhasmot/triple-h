@@ -50,12 +50,12 @@ const KB: { patterns: RegExp[]; response: string }[] = [
   // Appointment / Book
   {
     patterns: [/appointment|অ্যাপয়েন্টমেন্ট|book|বুক|meeting|মিটিং|visit|ভিজিট|consultation|কনসালটেশন/i],
-    response: `**অ্যাপয়েন্টমেন্ট বুক করুন:**\n\n📅 আমাদের সাথে দেখা করুন:\n- অফিস ভিজিট: সকাল ৯টা – রাত ৯টা\n- সাইট ভিজিট: পূর্ব নির্ধারিত সময়\n- অনলাইন কনসালটেশন: যেকোনো সময়\n\n📍 **অফিস:** Bypass Road, Ashulia, Savar, Dhaka\n\n👉 [Appointment বুক করুন](/book-appointment)\n📞 সরাসরি: 01778-506500\n💬 WhatsApp: +8801778506500`,
+    response: `**অ্যাপয়েন্টমেন্ট বুক করুন:**\n\n📅 আমাদের সাথে দেখা করুন:\n- অফিস ভিজিট: সকাল ৯টা – রাত ৯টা\n- সাইট ভিজিট: পূর্ব নির্ধারিত সময়\n- অনলাইন কনসালটেশন: যেকোনো সময়\n\n📍 **অফিস:** Aysha Monjil, House 14/05, Ward No 1, Noyabari, Savar Radio Colony, Dhaka\n\n👉 [Appointment বুক করুন](/book-appointment)\n📞 সরাসরি: 01778-506500\n💬 WhatsApp: +8801778506500`,
   },
   // Location / Address
   {
     patterns: [/address|ঠিকানা|location|অবস্থান|where|কোথায়|office|অফিস|ashulia|savar|dhaka/i],
-    response: `**আমাদের অফিস:**\n\n📍 Bypass Road, Ashulia\nSavar, Dhaka, Bangladesh 1341\n\n🕐 **অফিস সময়:**\nশনি–বৃহস্পতি: সকাল ৯টা – রাত ৯টা\nশুক্রবার: সকাল ১০টা – সন্ধ্যা ৬টা\n\n📞 **ফোন:** 01631-186218, 01778-506500\n📧 **ইমেইল:** info@tripleh.com.bd\n\n🗺️ Google Maps-এ খুঁজতে: "Triple H Plandraft Ashulia"`,
+    response: `**আমাদের অফিস:**\n\n📍 Aysha Monjil, House 14/05, Ward No 1\nNoyabari, Savar Radio Colony, Dhaka\n\n🕐 **অফিস সময়:**\nশনি–বৃহস্পতি: সকাল ৯টা – রাত ৯টা\nশুক্রবার: সকাল ১০টা – সন্ধ্যা ৬টা\n\n📞 **ফোন:** 01631-186218, 01778-506500\n📧 **ইমেইল:** info@tripleh.com.bd\n\n🗺️ Google Maps-এ খুঁজতে: "Triple H Plandraft Savar"`,
   },
   // Contact / Phone
   {

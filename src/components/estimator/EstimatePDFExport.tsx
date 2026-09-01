@@ -125,7 +125,7 @@ export default function EstimatePDFExport({ result, clientName, clientPhone }: P
       <div class="company-slogan">পরিকল্পিত নকশা, নিরাপদ নির্মাণ • Planned Design, Safe Construction</div>
     </div>
     <div class="company-contact">
-      Bypass Road, Ashulia, Savar, Dhaka-1341<br/>
+      Aysha Monjil, House 14/05, Ward No 1, Noyabari, Savar Radio Colony, Dhaka<br/>
       📞 01778-506500 | 01631-186218<br/>
       📧 info@tripleh.com.bd
     </div>
@@ -221,7 +221,7 @@ export default function EstimatePDFExport({ result, clientName, clientPhone }: P
   <div class="footer">
     <div class="footer-left">
       <div class="footer-brand">Triple H Plandraft & Engineering</div>
-      Bypass Road, Ashulia, Savar, Dhaka-1341, Bangladesh
+      Aysha Monjil, House 14/05, Ward No 1, Noyabari, Savar Radio Colony, Dhaka, Bangladesh
     </div>
     <div class="footer-right">
       Ref: ${refNo} • ${today}<br/>

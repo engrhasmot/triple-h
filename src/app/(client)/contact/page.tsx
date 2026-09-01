@@ -99,8 +99,8 @@ export default function ContactPage() {
                 <div>
                   <h4 className="font-bold text-lg text-foreground mb-1">Office Location</h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    Bypass Road, Ashulia<br/>
-                    Savar, Dhaka, Bangladesh 1341
+                    Aysha Monjil, House 14/05, Ward No 1<br/>
+                    Noyabari, Savar Radio Colony, Dhaka
                   </p>
                 </div>
               </div>

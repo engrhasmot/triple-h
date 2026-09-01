@@ -92,7 +92,7 @@ export default function Footer() {
               <li className="flex items-start">
                 <MapPin className="w-5 h-5 text-accent mr-3 mt-0.5 shrink-0" />
                 <span className="text-sm text-primary-foreground/80">
-                  Bypass Road, Ashulia<br />Savar, Dhaka, Bangladesh 1341
+                  Aysha Monjil, House 14/05, Ward No 1<br />Noyabari, Savar Radio Colony, Dhaka
                 </span>
               </li>
               <li className="flex items-center">

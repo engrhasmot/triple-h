@@ -97,10 +97,9 @@ export default function RootLayout({
               telephone: "+880-1778-506500",
               address: {
                 "@type": "PostalAddress",
-                streetAddress: "Bypass Road, Ashulia",
-                addressLocality: "Savar, Dhaka",
+                streetAddress: "Aysha Monjil, House 14/05, Ward No 1",
+                addressLocality: "Noyabari, Savar Radio Colony, Dhaka",
                 addressCountry: "BD",
-                postalCode: "1341",
               },
               sameAs: [
                 `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "8801778506500"}`,
