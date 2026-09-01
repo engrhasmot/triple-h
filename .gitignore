@@ -46,7 +46,9 @@ dev.err.log
 
 # unrelated project files
 *.docx
+*.pdf
 *.dwg
+Gemini_Generated_Image_*
 
 # keep public images
 !public/images/
