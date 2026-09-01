@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+:root {
+  --radius: 1rem; /* rounded-2xl default for flat depth */
+
+  /* ─── Light Mode (Slate 50 Canvas) ─── */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+
+  /* Primary is Slate 900 */
+  --primary: #0F172A;
+  --primary-foreground: #F8FAFC;
+
+  --secondary: #F1F5F9;
+  --secondary-foreground: #1E293B;
+
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+
+  /* Accent is Precision Amber 500 */
+  --accent: #F59E0B;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #F59E0B;
+
+  --chart-1: #F59E0B;
+  --chart-2: #0F172A;
+  --chart-3: #1E293B;
+  --chart-4: #F8FAFC;
+  --chart-5: #64748B;
+
+  /* Sidebar uses Dark Slate */
+  --sidebar: #0F172A;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #F59E0B;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #F59E0B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-montserrat);
+  --font-bengali: var(--font-hind);
+}
+
+/* ─── Base Styles ─── */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-weight: 500; /* Font-medium for body text */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), system-ui, -apple-system, sans-serif;
+  font-weight: 900; /* Font-black */
+  letter-spacing: -0.025em; /* Tracking-tight */
+}
+
+.bengali-text {
+  font-family: var(--font-bengali), var(--font-sans), sans-serif;
+}
+
+/* ─── Micro-copy & Badges ─── */
+.badge-micro {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Smooth Scrolling ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Selection Color ─── */
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+
+
+/* ─── Feedback Indicator Colors (Overrides) ─── */
+.status-submitted {
+  background-color: #EFF6FF !important; /* Blue 50 */
+  color: #1E3A8A !important; /* Blue 900 */
+}
+.status-review {
+  background-color: #FEF3C7 !important; /* Amber 100 */
+  color: #78350F !important; /* Amber 900 */
+}
+.status-correction {
+  background-color: #FEF2F2 !important; /* Rose 50 */
+  color: #7F1D1D !important; /* Rose 900 */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.status-approved {
+  background-color: #ECFDF5 !important; /* Emerald 50 */
+  color: #064E3B !important; /* Emerald 900 */
+}
+
+/* ─── Accordion Animations ─── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--accordion-panel-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--accordion-panel-height); }
+  to { height: 0; }
+}
+
+@utility animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+@utility animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+/* ─── Animations & Utilities ─── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(30, 41, 59, 0.1); /* Slate 800/10 */
+}
+
+@keyframes loading-bar {
+  0% { transform: scaleX(0); opacity: 1; }
+  50% { transform: scaleX(0.7); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+@utility animate-loading-bar {
+  animation: loading-bar 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
