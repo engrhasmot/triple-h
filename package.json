@@ -2,6 +2,9 @@
   "name": "triple-h",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev -p 3001 --webpack",
     "build": "next build",
@@ -11,7 +14,6 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "bcryptjs": "^2.4.3",
-
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
