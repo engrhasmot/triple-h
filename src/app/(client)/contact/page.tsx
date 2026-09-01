@@ -110,17 +110,26 @@ export default function ContactPage() {
             </div>
 
             {/* Google Maps Embed */}
-            <div className="h-64 rounded-2xl overflow-hidden shadow-lg border border-border">
+            <div className="h-80 rounded-2xl overflow-hidden shadow-lg border border-border relative group">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14594.019799203673!2d90.3168!3d23.8711!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c23d06979679%3A0xc023c01c0c977935!2sAshulia!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd" 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.8!2d90.2624181!3d23.8609885!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755e92add9847fd%3A0xdc7dc2fa86128021!2sAyasha%20Manzil!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd" 
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 
                 allowFullScreen={true} 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
-                className="filter"
+                className="transition-all duration-300 group-hover:scale-105"
               ></iframe>
+              <a 
+                href="https://maps.app.goo.gl/wdBzkKfqCw4Kbggs7" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="absolute bottom-3 right-3 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Open in Google Maps
+              </a>
             </div>
           </div>
 
