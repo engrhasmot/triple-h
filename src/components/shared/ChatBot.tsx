@@ -163,8 +163,8 @@ export default function ChatBot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-3 max-h-[calc(100vh-100px)]">
-      {/* Chat Window */}
+    <>
+      {/* Chat Window - positioned above button */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -172,8 +172,12 @@ export default function ChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ height: isMobile ? "70vh" : "520px", maxHeight: isMobile ? "70vh" : "520px" }}
+            className="fixed z-[200] w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            style={{
+              bottom: isMobile ? "90px" : "88px",
+              right: "24px",
+              height: isMobile ? "65vh" : "520px",
+            }}
           >
             {/* Header */}
             <div className="bg-primary px-4 py-3 flex items-center gap-3 shrink-0">
@@ -359,7 +363,7 @@ export default function ChatBot() {
         onClick={() => setIsOpen(prev => !prev)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
+        className="fixed bottom-6 right-6 z-[200] w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
         aria-label="Open chat assistant"
       >
         <AnimatePresence mode="wait">
@@ -390,6 +394,6 @@ export default function ChatBot() {
           <span className="absolute inset-0 rounded-full bg-accent animate-ping opacity-20" />
         )}
       </motion.button>
-    </div>
+    </>
   );
 }
