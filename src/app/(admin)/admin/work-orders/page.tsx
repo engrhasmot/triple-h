@@ -455,7 +455,7 @@ export default function WorkOrdersAdminPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {(
-                        Object.entries(STATUS_LABELS) as [
+                        Object.entries(STATUS_LABELS) as unknown as [
                           WorkOrderStatus,
                           string
                         ]

@@ -304,7 +304,7 @@ export default function AdminQuotationsPage() {
               <SelectContent>
                 <SelectItem value="">All Status</SelectItem>
                 {(
-                  Object.entries(STATUS_LABELS) as [InquiryStatus, string][]
+                  Object.entries(STATUS_LABELS) as unknown as [InquiryStatus, string][]
                 ).map(([k, v]) => (
                   <SelectItem key={k} value={k}>
                     {v}
@@ -325,7 +325,7 @@ export default function AdminQuotationsPage() {
               <SelectContent>
                 <SelectItem value="">All Services</SelectItem>
                 {(
-                  Object.entries(SERVICE_TYPE_LABELS) as [ServiceType, string][]
+                  Object.entries(SERVICE_TYPE_LABELS) as unknown as [ServiceType, string][]
                 ).map(([k, v]) => (
                   <SelectItem key={k} value={k}>
                     {v}
@@ -346,7 +346,7 @@ export default function AdminQuotationsPage() {
               <SelectContent>
                 <SelectItem value="">All Sources</SelectItem>
                 {(
-                  Object.entries(SOURCE_LABELS) as [InquirySource, string][]
+                  Object.entries(SOURCE_LABELS) as unknown as [InquirySource, string][]
                 ).map(([k, v]) => (
                   <SelectItem key={k} value={k}>
                     {v}
@@ -588,7 +588,7 @@ export default function AdminQuotationsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {(
-                        Object.entries(STATUS_LABELS) as [
+                        Object.entries(STATUS_LABELS) as unknown as [
                           InquiryStatus,
                           string
                         ][]

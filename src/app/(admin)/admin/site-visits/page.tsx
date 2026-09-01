@@ -446,10 +446,10 @@ export default function SiteVisitsAdminPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {(
-                        Object.entries(STATUS_LABELS) as [
+                        Object.entries(STATUS_LABELS) as unknown as [
                           AppointmentStatus,
                           string
-                        ]
+                        ][]
                       ).map(([k, v]) => (
                         <SelectItem key={k} value={k}>
                           {v}
