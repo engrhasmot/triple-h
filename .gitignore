@@ -46,6 +46,8 @@ dev.err.log
 
 # unrelated project files
 *.docx
-*.pdf
-*.png
 *.dwg
+
+# keep public images
+!public/images/
+!public/images/**
