@@ -52,8 +52,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
           
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 group">
+          {/* Logo + Name */}
+          <Link href="/" className="flex-shrink-0 group flex items-center gap-2.5">
             <Image
               src="/images/logo.png"
               alt="TRIPLE H PLANDRAFT & ENGINEERING"
@@ -62,6 +62,14 @@ export default function Navbar() {
               className="h-10 md:h-14 w-auto object-contain group-hover:opacity-80 transition-opacity"
               priority
             />
+            <div className="flex flex-col leading-tight">
+              <span className="text-base md:text-xl font-black tracking-tight text-foreground group-hover:text-accent transition-colors uppercase">
+                Triple H
+              </span>
+              <span className="text-[9px] md:text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
+                Plandraft &amp; Engineering
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
