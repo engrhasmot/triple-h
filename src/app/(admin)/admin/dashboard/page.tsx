@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, FolderKanban, FileText, CalendarRange, Loader2, Download, Database } from "lucide-react";
+import { Users, FolderKanban, FileText, CalendarRange, Loader2, Download, Database, MapPin, Phone, MessageCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ interface DashboardData {
     newBookings: number;
   };
   recentLeads: any[];
+  todayAppointments?: any[];
 }
 
 export default function AdminDashboard() {
@@ -154,6 +155,74 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Today's Schedule & Site Visits */}
+      <Card className="border-primary/20 shadow-sm bg-gradient-to-br from-card to-primary/5">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div className="space-y-0.5">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <CalendarRange className="w-5 h-5 text-primary" />
+              আজকের শিডিউল ও সাইট ভিজিট (Today&apos;s Schedule)
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {format(new Date(), "EEEE, dd MMMM yyyy")}
+            </p>
+          </div>
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+            {data.todayAppointments?.length || 0} Scheduled
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          {!data.todayAppointments || data.todayAppointments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 italic text-center">
+              আজকের কোনো নির্ধারিত সাইট ভিজিট বা অ্যাপয়েন্টমেন্ট নেই।
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {data.todayAppointments.map((apt: any) => (
+                <div key={apt._id} className="p-3.5 rounded-xl border bg-card/80 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <span className="font-semibold text-sm text-foreground">{apt.name}</span>
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {apt.appointmentType || "site-visit"}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      <span>{apt.timeSlot || "Anytime"}</span>
+                    </div>
+                    {apt.location && (
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
+                        <span className="truncate">{apt.location}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                    <a
+                      href={`tel:${apt.phone}`}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-secondary hover:bg-secondary/80 text-foreground transition-colors font-medium"
+                    >
+                      <Phone className="w-3 h-3" />
+                      Call
+                    </a>
+                    <a
+                      href={`https://wa.me/${apt.phone.replace(/[+\s-]/g, "").replace(/^0/, "880")}?text=${encodeURIComponent(`Hello ${apt.name}, regarding your appointment today with Triple H Plandraft & Engineering...`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors font-medium border border-emerald-200"
+                    >
+                      <MessageCircle className="w-3 h-3" />
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Database Backup */}
       <Card>

@@ -16,6 +16,8 @@ const EXPORT_COLLECTIONS = [
   "pageviews",
   "medias",
   "activitylogs",
+  "payments",
+  "workorders",
 ];
 
 export async function POST(req: NextRequest) {

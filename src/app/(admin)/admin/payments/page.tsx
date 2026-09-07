@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Search, Loader2, Banknote, TrendingUp, AlertCircle, CheckCircle, Clock, Trash2, ChevronDown, ChevronUp, X } from "lucide-react";
+import Image from "next/image";
+import { Plus, Search, Loader2, Banknote, TrendingUp, AlertCircle, CheckCircle, Clock, Trash2, ChevronDown, ChevronUp, X, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,10 @@ export default function PaymentsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Money Receipt Print Modal
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<{ payment: Payment; installment: Installment; index: number } | null>(null);
 
   // Modals
   const [showNewModal, setShowNewModal] = useState(false);
@@ -366,9 +371,23 @@ export default function PaymentsPage() {
                                 <p className="text-xs text-muted-foreground">{format(new Date(inst.paidOn), "dd MMM yyyy")} · by {inst.receivedBy}</p>
                                 {inst.note && <p className="text-xs text-muted-foreground italic mt-0.5">"{inst.note}"</p>}
                               </div>
-                              <div className="text-right">
-                                <p className="font-bold text-green-600">{formatBDT(inst.amount)}</p>
-                                <Badge variant="outline" className="text-xs mt-1">{inst.type}</Badge>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                  <p className="font-bold text-green-600">{formatBDT(inst.amount)}</p>
+                                  <Badge variant="outline" className="text-xs mt-1">{inst.type}</Badge>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 text-xs gap-1 text-slate-700 hover:text-foreground"
+                                  onClick={() => {
+                                    setSelectedReceipt({ payment, installment: inst, index: i });
+                                    setShowReceiptModal(true);
+                                  }}
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                  Receipt
+                                </Button>
                               </div>
                             </div>
                           ))}
@@ -511,6 +530,153 @@ export default function PaymentsPage() {
               <Button type="submit" className="flex-1 font-bold">Add Payment</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Printable Money Receipt Modal */}
+      <Dialog open={showReceiptModal} onOpenChange={setShowReceiptModal}>
+        <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto p-6 bg-white text-slate-900">
+          {selectedReceipt && (
+            <div>
+              {/* Receipt Document Container (Printable Area) */}
+              <div id="printable-receipt" className="border border-slate-300 rounded-xl p-6 sm:p-8 bg-white shadow-sm space-y-6">
+                {/* Header with Logo */}
+                <div className="flex items-center justify-between border-b pb-4 border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <img src="/logo.png" alt="Triple H Logo" className="w-14 h-14 object-contain" />
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">TRIPLE H</h2>
+                      <p className="text-xs font-semibold text-accent tracking-wider uppercase">Engineering Consultancy</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Civil Engineering · Architecture · RAJUK & City Plan Passing</p>
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-slate-600 space-y-0.5">
+                    <p className="font-semibold text-slate-800">Hotline: +880 1711-285651</p>
+                    <p>contact@tripleh.com</p>
+                    <p>Dhaka, Bangladesh</p>
+                  </div>
+                </div>
+
+                {/* Voucher Title & Ref */}
+                <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-lg border border-slate-200">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Receipt No:</span>
+                    <span className="ml-2 font-mono font-bold text-slate-900 text-sm">
+                      REC-{format(new Date(selectedReceipt.installment.paidOn), "yyyyMMdd")}-{selectedReceipt.payment._id?.slice(-4).toUpperCase() || "001"}
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full uppercase tracking-wider">
+                      Money Receipt
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Date:</span>
+                    <span className="ml-2 font-semibold text-slate-900 text-sm">
+                      {format(new Date(selectedReceipt.installment.paidOn), "dd MMM yyyy")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Client & Project Info */}
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+                    <p className="text-slate-500 font-semibold uppercase text-[10px]">Received From</p>
+                    <p className="font-bold text-sm text-slate-900">{selectedReceipt.payment.clientName}</p>
+                    <p className="text-slate-600">Phone: {selectedReceipt.payment.phone}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+                    <p className="text-slate-500 font-semibold uppercase text-[10px]">Project & Service</p>
+                    <p className="font-bold text-sm text-slate-900">{selectedReceipt.payment.projectTitle}</p>
+                    <p className="text-slate-600">Service: <span className="font-semibold text-slate-800">{selectedReceipt.payment.serviceType}</span></p>
+                    {selectedReceipt.payment.planFileRef && (
+                      <p className="text-slate-500 text-[11px]">Ref: {selectedReceipt.payment.planFileRef}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Breakdown Table */}
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px]">
+                      <tr>
+                        <th className="py-2.5 px-3">Description</th>
+                        <th className="py-2.5 px-3">Payment Method</th>
+                        <th className="py-2.5 px-3">Remarks / Note</th>
+                        <th className="py-2.5 px-3 text-right">Amount Received</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-slate-800">
+                      <tr>
+                        <td className="py-3 px-3 font-semibold text-sm">
+                          {selectedReceipt.installment.label || `${selectedReceipt.installment.type} Payment`}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 bg-slate-200 text-slate-800 rounded font-medium text-[11px]">
+                            {selectedReceipt.installment.type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600 italic">
+                          {selectedReceipt.installment.note || "N/A"}
+                        </td>
+                        <td className="py-3 px-3 text-right font-black text-sm text-emerald-700">
+                          {formatBDT(selectedReceipt.installment.amount)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Account Summary */}
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-1.5 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Total Agreed Bill:</span>
+                      <span className="font-semibold text-slate-900">{formatBDT(selectedReceipt.payment.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Total Paid Till Now:</span>
+                      <span className="font-semibold text-emerald-600">{formatBDT(selectedReceipt.payment.paidAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-800 pt-1.5 border-t border-slate-200 font-bold">
+                      <span>Remaining Balance:</span>
+                      <span className={selectedReceipt.payment.dueAmount > 0 ? "text-amber-600 font-bold" : "text-emerald-600"}>
+                        {formatBDT(selectedReceipt.payment.dueAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signatures */}
+                <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
+                  <div>
+                    <div className="border-t border-slate-400 w-36 mx-auto mb-1"></div>
+                    <p className="font-bold text-slate-700">Client Signature</p>
+                  </div>
+                  <div>
+                    <div className="border-t border-slate-400 w-36 mx-auto mb-1"></div>
+                    <p className="font-bold text-slate-700">Authorized Signature</p>
+                    <p className="text-[10px] text-slate-500">Triple H Engineering Consultancy</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-4 print:hidden">
+                <Button variant="outline" onClick={() => setShowReceiptModal(false)}>
+                  Close
+                </Button>
+                <Button
+                  className="gap-2 bg-accent hover:bg-accent/90 text-white font-bold"
+                  onClick={() => {
+                    window.print();
+                  }}
+                >
+                  <Printer className="w-4 h-4" /> Print Receipt
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

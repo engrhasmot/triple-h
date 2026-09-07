@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ const allNavItems = [
   { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/activity-log", label: "Activity Log", icon: History },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 const allowedHrefsByRole: Record<string, string[]> = {
@@ -48,6 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -56,6 +58,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (data?.role) setUserRole(data.role);
       })
       .catch(() => {});
+
+    const fetchCounts = () => {
+      fetch("/api/admin/counts")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.counts) setCounts(data.counts);
+        })
+        .catch(() => {});
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const navItems = userRole
@@ -111,6 +126,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+            const count = counts[item.href];
             return (
               <Link key={item.href} href={item.href}>
                 <span 
@@ -121,8 +137,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {count !== undefined && count > 0 && (
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-bold leading-none text-white bg-red-500 rounded-full shadow-sm">
+                      {count > 99 ? "99+" : count}
+                    </span>
+                  )}
                 </span>
               </Link>
             );

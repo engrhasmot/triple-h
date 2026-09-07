@@ -39,6 +39,16 @@ export async function GET(req: NextRequest) {
       .limit(10)
       .lean();
 
+    // Fetch today's scheduled appointments
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const todayAppointments = await Appointment.find({
+      date: { $gte: startOfToday, $lte: endOfToday }
+    }).sort({ timeSlot: 1 }).lean();
+
     return NextResponse.json({
       success: true,
       metrics: {
@@ -48,7 +58,8 @@ export async function GET(req: NextRequest) {
         pendingFiles,
         newBookings
       },
-      recentLeads
+      recentLeads,
+      todayAppointments,
     });
   } catch (error) {
     console.error('Dashboard API Error:', error);
