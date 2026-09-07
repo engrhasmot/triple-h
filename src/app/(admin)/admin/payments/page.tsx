@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Plus, Search, Loader2, Banknote, TrendingUp, AlertCircle, CheckCircle, Clock, Trash2, ChevronDown, ChevronUp, X, Printer } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Search, Loader2, Banknote, TrendingUp, AlertCircle, CheckCircle, Clock, Trash2, ChevronDown, ChevronUp, X, Printer, CreditCard, Check } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,6 +81,11 @@ export default function PaymentsPage() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<{ payment: Payment; installment: Installment; index: number } | null>(null);
 
+  // Online Submissions
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"records" | "submissions">("records");
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+
   // Modals
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
@@ -119,7 +124,43 @@ export default function PaymentsPage() {
     }
   }, [filterStatus, search]);
 
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+  const fetchSubmissions = useCallback(async () => {
+    try {
+      const res = await adminFetch("/api/admin/payments/submissions?status=all");
+      if (res.ok) {
+        const json = await res.json();
+        setSubmissions(json.submissions || []);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => { 
+    fetchPayments(); 
+    fetchSubmissions();
+  }, [fetchPayments, fetchSubmissions]);
+
+  const handleSubmissionAction = async (id: string, action: "approve" | "reject") => {
+    setReviewingId(id);
+    try {
+      const res = await adminFetch("/api/admin/payments/submissions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || (action === "approve" ? "Payment approved & receipt sent!" : "Submission rejected."));
+        fetchSubmissions();
+        fetchPayments();
+      } else {
+        toast.error(data.error || "Action failed");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,29 +287,164 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, phone, project..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <select
-          className="px-4 py-2 rounded-md border border-border bg-background text-sm font-medium"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
+      {/* Tabs */}
+      <div className="flex border-b border-border">
+        <button
+          className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === "records"
+              ? "border-accent text-accent"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => setActiveTab("records")}
         >
-          <option value="all">All Status</option>
-          <option value="due">Due</option>
-          <option value="partial">Partial</option>
-          <option value="paid">Paid</option>
-          <option value="overdue">Overdue</option>
-        </select>
+          <Banknote className="w-4 h-4" /> Client Ledgers ({payments.length})
+        </button>
+        <button
+          className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === "submissions"
+              ? "border-accent text-accent"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => setActiveTab("submissions")}
+        >
+          <CreditCard className="w-4 h-4" /> Online TrxID Submissions
+          {submissions.filter((s) => s.status === "pending").length > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-black text-xs">
+              {submissions.filter((s) => s.status === "pending").length}
+            </span>
+          )}
+        </button>
       </div>
+
+      {activeTab === "submissions" ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-accent" /> bKash &amp; Nagad TrxID Submissions
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Review and verify client payments sent via bKash or Nagad. Approving will automatically credit the client's ledger and send a WhatsApp receipt.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {submissions.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <CreditCard className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p className="font-semibold text-sm">No online payment submissions found.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold uppercase text-[11px]">
+                    <tr>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Client &amp; Project</th>
+                      <th className="py-3 px-4">Method &amp; Sender</th>
+                      <th className="py-3 px-4">Transaction ID</th>
+                      <th className="py-3 px-4 text-right">Amount</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {submissions.map((sub) => (
+                      <tr key={sub._id} className="hover:bg-muted/20 transition-colors">
+                        <td className="py-3 px-4 whitespace-nowrap text-muted-foreground">
+                          {format(new Date(sub.createdAt), "dd MMM yyyy, hh:mm a")}
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-bold text-foreground">{sub.clientName}</p>
+                          <p className="text-xs text-muted-foreground">{sub.phone}</p>
+                          {sub.projectTitle && (
+                            <p className="text-[11px] text-accent font-medium mt-0.5">{sub.projectTitle}</p>
+                          )}
+                          {sub.planFileRef && (
+                            <p className="text-[10px] text-muted-foreground font-mono">Ref: {sub.planFileRef}</p>
+                          )}
+                          {sub.note && (
+                            <p className="text-[11px] text-muted-foreground italic mt-0.5">"{sub.note}"</p>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <Badge variant="outline" className={`text-xs uppercase font-bold ${
+                            sub.method === "bkash" ? "bg-pink-50 text-pink-700 border-pink-300" : "bg-orange-50 text-orange-700 border-orange-300"
+                          }`}>
+                            {sub.method}
+                          </Badge>
+                          <p className="text-xs font-mono text-muted-foreground mt-0.5">{sub.senderPhone}</p>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap font-mono font-bold text-foreground">
+                          {sub.transactionId}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap font-black text-emerald-600">
+                          {formatBDT(sub.amount)}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <Badge variant={sub.status === "approved" ? "default" : sub.status === "rejected" ? "destructive" : "secondary"} className="text-[10px] uppercase font-bold">
+                            {sub.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          {sub.status === "pending" ? (
+                            <div className="flex justify-end gap-1.5">
+                              <Button
+                                size="sm"
+                                className="h-8 text-xs font-bold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                disabled={reviewingId === sub._id}
+                                onClick={() => handleSubmissionAction(sub._id, "approve")}
+                              >
+                                {reviewingId === sub._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30"
+                                disabled={reviewingId === sub._id}
+                                onClick={() => handleSubmissionAction(sub._id, "reject")}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {sub.status === "approved" ? "Verified & Recorded" : "Rejected"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, phone, project..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <select
+              className="px-4 py-2 rounded-md border border-border bg-background text-sm font-medium"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="due">Due</option>
+              <option value="partial">Partial</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
 
       {/* Payment List */}
       {loading ? (
@@ -410,6 +586,8 @@ export default function PaymentsPage() {
           })}
         </div>
       )}
+    </>
+  )}
 
       {/* New Payment Modal */}
       <Dialog open={showNewModal} onOpenChange={setShowNewModal}>

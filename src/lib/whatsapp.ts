@@ -456,3 +456,33 @@ export function newReviewAdminWhatsApp(data: {
     `Triple H Plandraft & Engineering`,
   ].join('\n');
 }
+
+export function newPaymentSubmissionWhatsApp(data: {
+  clientName: string;
+  phone: string;
+  amount: number;
+  method: string;
+  senderPhone: string;
+  transactionId: string;
+  projectTitle?: string;
+  planFileRef?: string;
+}): string {
+  const lines = [
+    `🔔 *নতুন অনলাইন পেমেন্ট সাবমিশন!*`,
+    `Triple H Engineering Consultancy`,
+    ``,
+    `👤 ক্লায়েন্ট: *${data.clientName}*`,
+    `📞 ফোন: ${data.phone}`,
+    `💰 পেমেন্টের পরিমাণ: *৳${data.amount.toLocaleString('en-BD')}*`,
+    `💳 মাধ্যম: *${data.method.toUpperCase()}* (Sender: ${data.senderPhone})`,
+    `🔖 ট্রানজেকশন আইডি (TrxID): *${data.transactionId}*`,
+  ];
+  if (data.projectTitle) lines.push(`🏗️ প্রজেক্ট: ${data.projectTitle}`);
+  if (data.planFileRef) lines.push(`📁 ফাইল রেফারেন্স: ${data.planFileRef}`);
+  lines.push(`⏰ সময়: ${nowBD()}`);
+  lines.push(``);
+  lines.push(`👉 যাচাই ও অনুমোদন করতে ভিজিট করুন:`);
+  lines.push(`🌐 ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/payments`);
+  return lines.join('\n');
+}
+

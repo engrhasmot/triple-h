@@ -17,7 +17,8 @@ import {
   ShieldCheck, 
   AlertCircle,
   ExternalLink,
-  Printer
+  Printer,
+  CreditCard
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -265,9 +266,18 @@ export default function ClientPortalPage() {
                   {/* Financial & Payment Ledger */}
                   {mainPayment && (
                     <div className="space-y-3 pt-2">
-                      <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Banknote className="w-4 h-4 text-accent" /> পেমেন্ট লেজার ও রসিদ বিবরণ
-                      </h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Banknote className="w-4 h-4 text-accent" /> পেমেন্ট লেজার ও রসিদ বিবরণ
+                        </h4>
+                        <Link
+                          href={`/pay?fileId=${project.fileId}&phone=${project.phone}&name=${encodeURIComponent(project.clientName)}&title=${encodeURIComponent(project.projectTitle)}&amount=${mainPayment.dueAmount > 0 ? mainPayment.dueAmount : ''}`}
+                        >
+                          <Button size="sm" className="h-8 font-bold gap-1.5 bg-accent hover:bg-accent/90 text-white text-xs">
+                            <CreditCard className="w-3.5 h-3.5" /> অনলাইনে পরিশোধ করুন
+                          </Button>
+                        </Link>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="p-3.5 rounded-xl border bg-muted/30 text-xs">
                           <span className="text-muted-foreground">মোট চুক্তি বিল</span>
