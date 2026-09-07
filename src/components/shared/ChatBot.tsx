@@ -177,6 +177,7 @@ export default function ChatBot() {
               bottom: "136px",
               right: "24px",
               height: isMobile ? "65vh" : "520px",
+              maxHeight: "calc(100vh - 160px)",
             }}
           >
             {/* Header */}
