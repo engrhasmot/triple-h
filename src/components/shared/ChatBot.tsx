@@ -174,7 +174,7 @@ export default function ChatBot() {
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="fixed z-[200] w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
             style={{
-              bottom: isMobile ? "156px" : "152px",
+              bottom: isMobile ? "90px" : "88px",
               right: "24px",
               height: isMobile ? "65vh" : "520px",
             }}
@@ -363,7 +363,7 @@ export default function ChatBot() {
         onClick={() => setIsOpen(prev => !prev)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-[5.5rem] right-6 z-[200] w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
+        className="fixed bottom-6 right-6 z-[200] w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
         aria-label="Open chat assistant"
       >
         <AnimatePresence mode="wait">

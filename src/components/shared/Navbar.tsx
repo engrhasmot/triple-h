@@ -63,7 +63,7 @@ export default function Navbar() {
               priority
             />
             <div className="flex flex-col leading-tight">
-              <span className="text-base md:text-xl font-black tracking-tight text-foreground group-hover:text-accent transition-colors uppercase">
+              <span className="text-base md:text-xl font-black tracking-tight text-accent group-hover:text-accent/80 transition-colors uppercase">
                 Triple H
               </span>
               <span className="text-[9px] md:text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
