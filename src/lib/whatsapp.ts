@@ -486,3 +486,48 @@ export function newPaymentSubmissionWhatsApp(data: {
   return lines.join('\n');
 }
 
+export function inspectionReportWhatsApp(data: {
+  clientName: string;
+  reportNumber: string;
+  projectTitle: string;
+  stage: string;
+  status: string;
+  observations: string;
+  instructions: string;
+  nextVisitDate?: string;
+}): string {
+  const statusBangla: Record<string, string> = {
+    satisfactory: "সন্তোষজনক (Satisfactory) ✅",
+    "action-required": "সংশোধন প্রয়োজন (Action Required) ⚠️",
+    rejected: "অননুমোদিত / পুনরায় কাজ আবশ্যক (Rejected) ❌",
+  };
+
+  const lines = [
+    `🏗️ *সাইট পরিদর্শন ফিল্ড রিপোর্ট (Site Inspection Report)*`,
+    `*Triple H Plandraft & Engineering*`,
+    `রিপোর্ট নং: *${data.reportNumber}*`,
+    ``,
+    `প্রিয় ${data.clientName},`,
+    `আপনার প্রজেক্ট "*${data.projectTitle}*" এ আজকের সাইট পরিদর্শন সম্পন্ন হয়েছে।`,
+    ``,
+    `🔍 কাজের ধাপ: *${data.stage}*`,
+    `📊 পরিদর্শনের ফলাফল: *${statusBangla[data.status] || data.status}*`,
+    ``,
+    `📝 *মূল পর্যবেক্ষণ:*`,
+    `${data.observations}`,
+    ``,
+    `👷 *কন্ট্রাক্টর/মিস্ত্রির জন্য জরুরি নির্দেশ:*`,
+    `${data.instructions}`,
+  ];
+
+  if (data.nextVisitDate) {
+    lines.push(``);
+    lines.push(`📅 পরবর্তী সম্ভাব্য ভিজিট: *${data.nextVisitDate}*`);
+  }
+
+  lines.push(``);
+  lines.push(`ইঞ্জিনিয়ার মোঃ হাসমত আলী (Managing Director)`);
+  lines.push(`📞 যেকোনো প্রয়োজনে: 01778-506500`);
+
+  return lines.join('\n');
+}

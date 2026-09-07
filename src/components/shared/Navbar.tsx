@@ -38,6 +38,7 @@ export default function Navbar() {
 
   const secondaryLinks = [
     { name: t("nav.clientPortal"), href: "/client-portal" },
+    { name: t("nav.approvalGuide"), href: "/approval-guide" },
     { name: t("nav.payOnline"), href: "/pay" },
     { name: t("nav.costEstimator"), href: "/cost-estimator" },
     { name: t("nav.trackPlan"), href: "/track-plan" },
