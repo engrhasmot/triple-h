@@ -27,6 +27,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -91,6 +92,17 @@ function getWhatsAppLink(phone: string, name?: string) {
     ? `Hello ${name}, thank you for booking an appointment with Triple H Plandraft & Engineering!`
     : "Hello, thank you for booking an appointment with Triple H Plandraft & Engineering!";
   return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+}
+
+function safeFormatDate(dateVal: any, formatStr = "MMM dd, yyyy") {
+  if (!dateVal) return "-";
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "-";
+    return format(d, formatStr);
+  } catch {
+    return "-";
+  }
 }
 
 export default function SiteVisitsAdminPage() {
@@ -311,19 +323,19 @@ export default function SiteVisitsAdminPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {format(new Date(apt.date), "MMM dd, yyyy")}
+                        {safeFormatDate(apt.date, "MMM dd, yyyy")}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {apt.timeSlot}
+                        {apt.timeSlot || "-"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          STATUS_BADGE_CLASSES[apt.status]
+                          STATUS_BADGE_CLASSES[apt.status] || ""
                         }`}
                       >
-                        {STATUS_LABELS[apt.status]}
+                        {STATUS_LABELS[apt.status] || apt.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -336,26 +348,28 @@ export default function SiteVisitsAdminPage() {
                           <MoreVertical className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openDetail(apt);
-                            }}
-                          >
-                            View details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600 focus:bg-red-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(apt._id);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetail(apt);
+                              }}
+                            >
+                              View details
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600 focus:bg-red-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(apt._id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -455,11 +469,11 @@ export default function SiteVisitsAdminPage() {
                   <p className="text-sm flex flex-col">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                      {format(new Date(selectedAppointment.date), "MMMM dd, yyyy")}
+                      {safeFormatDate(selectedAppointment.date, "MMMM dd, yyyy")}
                     </span>
                     <span className="flex items-center gap-1 text-muted-foreground mt-0.5">
                       <Clock className="h-3.5 w-3.5" />
-                      {selectedAppointment.timeSlot}
+                      {selectedAppointment.timeSlot || "-"}
                     </span>
                   </p>
                 </div>
@@ -504,9 +518,9 @@ export default function SiteVisitsAdminPage() {
             </div>
           )}
           <DialogFooter className="mt-4">
-            <DialogClose>
-              <Button variant="outline">Close</Button>
-            </DialogClose>
+            <Button variant="outline" onClick={() => setDetailOpen(false)}>
+              Close
+            </Button>
             <Button onClick={saveDetail} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
@@ -524,9 +538,9 @@ export default function SiteVisitsAdminPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}

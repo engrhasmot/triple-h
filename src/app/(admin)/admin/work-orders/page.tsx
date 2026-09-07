@@ -27,6 +27,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -339,26 +340,28 @@ export default function WorkOrdersAdminPage() {
                           <MoreVertical className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openDetail(wo);
-                            }}
-                          >
-                            View details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600 focus:bg-red-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(wo._id);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetail(wo);
+                              }}
+                            >
+                              View details
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600 focus:bg-red-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(wo._id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -522,9 +525,7 @@ export default function WorkOrdersAdminPage() {
             </div>
           )}
           <DialogFooter className="mt-4">
-            <DialogClose>
-              <Button variant="outline">Close</Button>
-            </DialogClose>
+            <Button variant="outline" onClick={() => setDetailOpen(false)}>Close</Button>
             <Button onClick={saveDetail} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
@@ -542,9 +543,7 @@ export default function WorkOrdersAdminPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
