@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState, useId } from "react";
+import Image from "next/image";
 import {
   Printer,
   Plus,
@@ -249,22 +250,31 @@ export default function AdminQuotationsPage() {
       <div className="bg-white text-slate-900 shadow-xl rounded-2xl border p-8 md:p-12 print:shadow-none print:border-none print:p-0 print:m-0 print:rounded-none">
         {/* Letterhead Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b pb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 className="w-8 h-8 text-blue-900" />
-              <h2 className="text-2xl md:text-3xl font-extrabold text-blue-950 tracking-tight">
+          <div className="flex items-start gap-4">
+            <div className="relative w-16 h-16 shrink-0 mt-0.5 bg-slate-50 rounded-lg p-1 border border-slate-200/80 flex items-center justify-center print:border-none print:p-0 print:bg-transparent">
+              <Image
+                src="/images/logo.png"
+                alt="Triple H Logo"
+                width={64}
+                height={64}
+                className="object-contain w-14 h-14"
+                priority
+              />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-blue-950 tracking-tight leading-tight">
                 TRIPLE H PLANDRAFT & ENGINEERING
               </h2>
+              <p className="text-xs text-slate-500 font-medium tracking-wide mt-0.5">
+                Architectural Design • Structural Engineering • Rajuk Approval • Supervision
+              </p>
+              <p className="text-xs text-slate-600 mt-1">
+                House 14/05, Ward 01, Noyabari, Savar Radio Colony, Dhaka
+              </p>
+              <p className="text-xs text-slate-600">
+                📞 +880 1631-186218, +880 1778-506500 | ✉️ info@tripleh.com.bd
+              </p>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Architectural Design • Structural Engineering • Rajuk Approval • Supervision
-            </p>
-            <p className="text-xs text-slate-600 mt-1">
-              House 14/05, Ward 01, Noyabari, Savar Radio Colony, Dhaka
-            </p>
-            <p className="text-xs text-slate-600">
-              📞 +880 1631-186218, +880 1778-506500 | ✉️ info@tripleh.com.bd
-            </p>
           </div>
 
           <div className="text-right sm:self-center">
