@@ -4,6 +4,7 @@ import PlanStatus from '@/models/plan-status.model';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { sendSMS, planStatusUpdateSMS } from '@/lib/sms';
+import { sendWhatsApp, planStatusClientWhatsApp } from '@/lib/whatsapp';
 
 async function checkAuth(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -99,7 +100,7 @@ export async function PATCH(req: NextRequest) {
       { new: true }
     );
 
-    // Fire SMS notification (non-blocking)
+    // Fire SMS & WhatsApp notification (non-blocking)
     if (updated) {
       sendSMS(
         updated.phone,
@@ -111,6 +112,17 @@ export async function PATCH(req: NextRequest) {
           note: remark || '',
         })
       ).catch(err => console.error('[SMS] Failed to send status update SMS:', err));
+
+      sendWhatsApp(
+        planStatusClientWhatsApp({
+          clientName: updated.clientName,
+          fileId: updated.fileId,
+          projectTitle: updated.projectTitle,
+          newStatus: currentStatus,
+          note: remark || '',
+        }),
+        updated.phone
+      ).catch(err => console.error('[WhatsApp] Failed to send status update WhatsApp:', err));
     }
 
     return NextResponse.json({ success: true, data: updated });

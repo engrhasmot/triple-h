@@ -53,3 +53,6 @@ Gemini_Generated_Image_*
 # keep public images
 !public/images/
 !public/images/**
+
+.vercel
+.env*

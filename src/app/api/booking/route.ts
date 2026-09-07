@@ -4,6 +4,7 @@ import Appointment from '@/models/appointment.model';
 import { appointmentSchema } from '@/lib/validators';
 import { sendEmail } from '@/lib/email';
 import { newBookingEmail } from '@/lib/email-templates';
+import { sendWhatsApp, newBookingWhatsApp, clientBookingConfirmWhatsApp } from '@/lib/whatsapp';
 
 export async function POST(req: Request) {
   try {
@@ -51,6 +52,28 @@ export async function POST(req: Request) {
         type: appointmentType || 'site-visit',
       }),
     }).catch(err => console.error('Email notification failed:', err));
+
+    sendWhatsApp(
+      newBookingWhatsApp({
+        name,
+        phone,
+        appointmentType: appointmentType || 'site-visit',
+        date: appointmentDate.toISOString(),
+        timeSlot: timeSlot || undefined,
+        location: location || undefined,
+      })
+    ).catch(err => console.error('Admin WhatsApp notification failed:', err));
+
+    // Send confirmation to client's WhatsApp
+    sendWhatsApp(
+      clientBookingConfirmWhatsApp({
+        name,
+        appointmentType: appointmentType || 'site-visit',
+        date: appointmentDate.toISOString(),
+        timeSlot: timeSlot || undefined,
+      }),
+      phone
+    ).catch(err => console.error('Client WhatsApp confirmation failed:', err));
 
     return NextResponse.json(
       { success: true, data: { appointmentId: appointment._id } },

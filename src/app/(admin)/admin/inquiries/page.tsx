@@ -14,6 +14,7 @@ import {
   Ruler,
   Globe,
   Calendar,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,14 @@ const SOURCE_LABELS: Record<InquirySource, string> = {
   phone: "Phone",
   referral: "Referral",
 };
+
+function getWhatsAppLink(phone: string, name?: string) {
+  const clean = phone.replace(/[+\s-]/g, "").replace(/^0/, "880");
+  const msg = name
+    ? `Hello ${name}, thank you for contacting Triple H Plandraft & Engineering!`
+    : "Hello, thank you for contacting Triple H Plandraft & Engineering!";
+  return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+}
 
 export default function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -395,7 +404,19 @@ export default function AdminInquiriesPage() {
                   >
                     <td className="px-4 py-3 font-medium">{inquiry.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {inquiry.phone}
+                      <div className="flex items-center gap-1.5">
+                        <span>{inquiry.phone}</span>
+                        <a
+                          href={getWhatsAppLink(inquiry.phone, inquiry.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1 rounded text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                          title="Chat on WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </a>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className="capitalize">
@@ -459,7 +480,18 @@ export default function AdminInquiriesPage() {
                   <div className="text-sm text-muted-foreground space-y-1">
                     <div className="flex items-center gap-2">
                       <Phone className="h-3.5 w-3.5" />
-                      {inquiry.phone}
+                      <span>{inquiry.phone}</span>
+                      <a
+                        href={getWhatsAppLink(inquiry.phone, inquiry.name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors ml-auto"
+                        title="Chat on WhatsApp"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        WhatsApp
+                      </a>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5" />
@@ -525,9 +557,19 @@ export default function AdminInquiriesPage() {
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                     Phone
                   </p>
-                  <p className="text-sm flex items-center gap-1">
+                  <p className="text-sm flex items-center gap-1.5 flex-wrap">
                     <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                    {selectedInquiry.phone}
+                    <span>{selectedInquiry.phone}</span>
+                    <a
+                      href={getWhatsAppLink(selectedInquiry.phone, selectedInquiry.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 border border-emerald-200 transition-colors ml-1"
+                      title="Chat on WhatsApp"
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                      WhatsApp
+                    </a>
                   </p>
                 </div>
                 <div className="space-y-1">

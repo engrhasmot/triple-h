@@ -4,6 +4,7 @@ import Inquiry from '@/models/inquiry.model';
 import { costEstimatorSchema, phoneSchema } from '@/lib/validators';
 import { sendEmail } from '@/lib/email';
 import { newInquiryEmail } from '@/lib/email-templates';
+import { sendWhatsApp, newEstimateWhatsApp, clientEstimateConfirmWhatsApp } from '@/lib/whatsapp';
 
 const RATES = {
   standard: { base: 1800, label: 'Standard' },
@@ -104,6 +105,30 @@ export async function POST(req: Request) {
         message: `Cost Estimate: ${totalArea} sq ft, ${floors} floor(s), ${quality}. Range: BDT ${minCost.toLocaleString()} - ${maxCost.toLocaleString()}`,
       }),
     }).catch(err => console.error('Email notification failed:', err));
+
+    sendWhatsApp(
+      newEstimateWhatsApp({
+        name,
+        phone,
+        areaSqFt: Number(areaSqFt),
+        floors: Number(floors),
+        quality,
+        minCost,
+        maxCost,
+      })
+    ).catch(err => console.error('Admin WhatsApp notification failed:', err));
+
+    // Send confirmation to client's WhatsApp
+    sendWhatsApp(
+      clientEstimateConfirmWhatsApp({
+        name,
+        minCost,
+        maxCost,
+        quality,
+        totalArea,
+      }),
+      phoneParsed.data
+    ).catch(err => console.error('Client WhatsApp confirmation failed:', err));
 
     return NextResponse.json(
       {

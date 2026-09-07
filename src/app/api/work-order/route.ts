@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import WorkOrder from '@/models/work-order.model';
 import { sendEmail } from '@/lib/email';
 import { z } from 'zod';
+import { sendWhatsApp, newWorkOrderWhatsApp, clientWorkOrderConfirmWhatsApp } from '@/lib/whatsapp';
 
 const workOrderSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -38,6 +39,27 @@ export async function POST(req: Request) {
       subject: `New Work Order Request from ${parsed.data.name}`,
       html: `A new work order request has been submitted.\n\nName: ${parsed.data.name}\nPhone: ${parsed.data.phone}\nProject: ${parsed.data.projectTitle}\nLocation: ${parsed.data.projectLocation}\nRequirements:\n${parsed.data.requirements}`,
     }).catch(err => console.error('Email notification failed:', err));
+
+    // Send admin notification
+    sendWhatsApp(
+      newWorkOrderWhatsApp({
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        projectTitle: parsed.data.projectTitle,
+        projectLocation: parsed.data.projectLocation,
+        requirements: parsed.data.requirements,
+        estimatedBudget: parsed.data.estimatedBudget,
+      })
+    ).catch(err => console.error('Admin WhatsApp notification failed:', err));
+
+    // Send confirmation to client
+    sendWhatsApp(
+      clientWorkOrderConfirmWhatsApp({
+        name: parsed.data.name,
+        projectTitle: parsed.data.projectTitle,
+      }),
+      parsed.data.phone
+    ).catch(err => console.error('Client WhatsApp confirmation failed:', err));
 
     return NextResponse.json(
       { success: true, data: { workOrderId: workOrder._id } },
