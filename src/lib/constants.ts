@@ -7,6 +7,7 @@ export const SITE_CONFIG = {
     'Professional civil engineering consultancy specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision in Bangladesh.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8801778506500',
+  facebook: 'https://www.facebook.com/profile.php?id=61592186641331',
   email: 'info@triplehengineering.com',
   phone: '+880-1XXX-XXXXXX',
   address: 'Dhaka, Bangladesh',

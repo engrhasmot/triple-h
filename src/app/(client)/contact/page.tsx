@@ -107,6 +107,21 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
+
+              <a
+                href="https://www.facebook.com/profile.php?id=61592186641331"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start p-6 glass-panel rounded-2xl border border-border hover:border-accent/50 transition-colors group"
+              >
+                <div className="bg-primary/10 p-3 rounded-full mr-5 group-hover:bg-accent group-hover:text-primary transition-colors">
+                  <svg className="w-6 h-6 text-primary group-hover:text-primary" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg text-foreground mb-1">Facebook Page</h4>
+                  <p className="text-muted-foreground">Follow our updates & projects on Facebook</p>
+                </div>
+              </a>
             </div>
 
             {/* Google Maps Embed */}
