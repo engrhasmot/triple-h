@@ -14,7 +14,8 @@ export default function FloatingWhatsApp() {
       href={waLink}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-[9rem] right-6 z-50 flex items-center justify-center w-12 h-12 bg-[#25D366] text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 hover:-translate-y-1 transition-all duration-300 animate-in fade-in slide-in-from-bottom-10 group"
+      className="fixed z-50 flex items-center justify-center w-12 h-12 bg-[#25D366] text-white rounded-full shadow-lg hover:shadow-2xl hover:scale-110 hover:-translate-y-1 transition-all duration-300 animate-in fade-in slide-in-from-bottom-10 group"
+      style={{ bottom: "144px", right: "24px" }}
       aria-label="Chat on WhatsApp"
     >
       <WhatsAppIcon className="w-6 h-6" />
