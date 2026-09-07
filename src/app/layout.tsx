@@ -70,6 +70,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { LanguageProvider } from "@/context/LanguageContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -77,12 +79,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="bn"
       data-scroll-behavior="smooth"
       className={`${inter.variable} ${montserrat.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
         <Toaster richColors position="top-right" />
           <Script id="jsonld-organization" type="application/ld+json" strategy="afterInteractive">
             {JSON.stringify({

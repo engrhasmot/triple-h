@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ const allNavItems = [
   { href: "/admin/work-orders", label: "Work Orders", icon: ClipboardList },
   { href: "/admin/files", label: "Plan Files", icon: FileText },
   { href: "/admin/payments", label: "Payments", icon: Banknote },
+  { href: "/admin/expenses", label: "Expenses", icon: Receipt },
   { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/activity-log", label: "Activity Log", icon: History },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

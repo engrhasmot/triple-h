@@ -21,6 +21,40 @@ export default function AdminFiles() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [remark, setRemark] = useState<Record<string, string>>({});
 
+  // Milestone & Progress Modal State
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false);
+  const [selectedFileForMilestones, setSelectedFileForMilestones] = useState<any>(null);
+  const [editProgress, setEditProgress] = useState(0);
+  const [editMilestones, setEditMilestones] = useState<any[]>([]);
+  const [savingMilestones, setSavingMilestones] = useState(false);
+
+  const handleSaveMilestones = async () => {
+    if (!selectedFileForMilestones) return;
+    setSavingMilestones(true);
+    try {
+      const res = await adminFetch("/api/admin/files", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedFileForMilestones._id,
+          progressPercentage: editProgress,
+          milestones: editMilestones,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Milestones & progress updated successfully!");
+        setMilestoneModalOpen(false);
+        fetchFiles();
+      } else {
+        toast.error("Failed to update milestones");
+      }
+    } catch {
+      toast.error("Network error while updating milestones");
+    } finally {
+      setSavingMilestones(false);
+    }
+  };
+
   const [newFile, setNewFile] = useState({
     clientName: '',
     phone: '',
@@ -161,9 +195,44 @@ export default function AdminFiles() {
                     File ID: <span className="font-mono font-bold text-foreground">{file.fileId}</span>
                   </p>
                 </div>
-                <div className="text-left md:text-right text-sm">
-                  <p><span className="font-medium">Client:</span> {file.clientName}</p>
-                  <p className="text-muted-foreground">{file.phone}</p>
+                <div className="flex flex-col md:items-end justify-between gap-2">
+                  <div className="text-left md:text-right text-sm">
+                    <p><span className="font-medium">Client:</span> {file.clientName}</p>
+                    <p className="text-muted-foreground">{file.phone}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs font-bold border-accent/40 text-accent hover:bg-accent/10"
+                    onClick={() => {
+                      setSelectedFileForMilestones(file);
+                      setEditProgress(file.progressPercentage || 0);
+                      setEditMilestones(file.milestones && file.milestones.length > 0 ? file.milestones : [
+                        { title: 'Soil Test & Site Survey', status: 'completed' },
+                        { title: 'Architectural 2D Plan Design', status: 'completed' },
+                        { title: '3D Elevation & Structural Drawing', status: 'in-progress' },
+                        { title: 'RAJUK / Municipal Submission', status: 'pending' },
+                        { title: 'Plan Passing & Final Clearance', status: 'pending' },
+                      ]);
+                      setMilestoneModalOpen(true);
+                    }}
+                  >
+                    Manage Milestones ({file.progressPercentage || 0}%)
+                  </Button>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mt-4 pt-3 border-t">
+                <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
+                  <span className="text-muted-foreground">Overall Project Progress</span>
+                  <span className="text-accent font-bold">{file.progressPercentage || 0}% Complete</span>
+                </div>
+                <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-all duration-500 rounded-full"
+                    style={{ width: `${Math.min(100, Math.max(0, file.progressPercentage || 0))}%` }}
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -199,11 +268,32 @@ export default function AdminFiles() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Active Milestones Summary */}
+                  {file.milestones && file.milestones.length > 0 && (
+                    <div className="pt-2">
+                      <label className="text-xs font-semibold text-muted-foreground mb-2 block">Key Milestones:</label>
+                      <div className="space-y-1.5">
+                        {file.milestones.map((m: any, mIdx: number) => (
+                          <div key={mIdx} className="flex items-center justify-between text-xs py-1 px-2.5 rounded bg-muted/40 border">
+                            <span>{m.title}</span>
+                            <Badge variant="outline" className={`text-[10px] uppercase font-bold ${
+                              m.status === 'completed' ? 'text-emerald-600 bg-emerald-50 border-emerald-200' :
+                              m.status === 'in-progress' ? 'text-blue-600 bg-blue-50 border-blue-200' :
+                              'text-slate-500'
+                            }`}>
+                              {m.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="font-semibold border-b pb-2">Recent Updates</h3>
-                  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+                  <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2">
                     {file.statusHistory.slice().reverse().map((h: any, i: number) => (
                       <div key={i} className="text-sm p-3 rounded-md bg-muted/50 border">
                         <div className="flex justify-between items-center mb-1">
@@ -229,6 +319,86 @@ export default function AdminFiles() {
           </div>
         )}
       </div>
+
+      {/* Milestone & Progress Editor Dialog */}
+      <Dialog open={milestoneModalOpen} onOpenChange={setMilestoneModalOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <FileText className="w-5 h-5 text-accent" /> Milestone & Project Progress
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedFileForMilestones && (
+            <div className="space-y-5 mt-2">
+              <div className="bg-muted/40 p-3 rounded-lg text-xs space-y-1">
+                <p className="font-bold text-foreground text-sm">{selectedFileForMilestones.projectTitle}</p>
+                <p className="text-muted-foreground">Client: {selectedFileForMilestones.clientName} · File ID: <span className="font-mono font-semibold">{selectedFileForMilestones.fileId}</span></p>
+              </div>
+
+              {/* Progress Slider / Input */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="prog-slider">Overall Progress Percentage</Label>
+                  <span className="font-black text-accent text-base">{editProgress}%</span>
+                </div>
+                <input
+                  id="prog-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={editProgress}
+                  onChange={(e) => setEditProgress(Number(e.target.value))}
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-accent"
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>0% (Initiated)</span>
+                  <span>50% (Under Review)</span>
+                  <span>100% (Approved/Completed)</span>
+                </div>
+              </div>
+
+              {/* Milestones Checklist */}
+              <div className="space-y-2.5">
+                <Label className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                  Key Project Milestones
+                </Label>
+                <div className="space-y-2">
+                  {editMilestones.map((m, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border bg-card text-xs">
+                      <span className="font-medium flex-1">{m.title}</span>
+                      <select
+                        className="px-2 py-1 rounded border border-border bg-background text-xs"
+                        value={m.status}
+                        onChange={(e) => {
+                          const val = e.target.value as 'pending' | 'in-progress' | 'completed';
+                          setEditMilestones((prev) =>
+                            prev.map((item, i) => (i === idx ? { ...item, status: val } : item))
+                          );
+                        }}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t">
+                <Button variant="outline" onClick={() => setMilestoneModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button disabled={savingMilestones} onClick={handleSaveMilestones} className="font-bold bg-accent hover:bg-accent/90">
+                  {savingMilestones ? 'Saving...' : 'Save Milestones & Progress'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

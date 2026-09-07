@@ -71,10 +71,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
   }
   try {
-    const { id, currentStatus, remark } = await req.json();
+    const { id, currentStatus, remark, progressPercentage, milestones, sitePhotos } = await req.json();
 
-    if (!id || !currentStatus) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'Missing file id' }, { status: 400 });
     }
 
     await dbConnect();
@@ -84,19 +84,34 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
 
-    const newHistoryEntry = {
-      status: currentStatus,
-      note: remark || '',
-      updatedBy: (payload as any).email,
-      date: new Date()
-    };
+    const updateFields: Record<string, any> = {};
+
+    if (currentStatus) {
+      updateFields.currentStatus = currentStatus;
+      const newHistoryEntry = {
+        status: currentStatus,
+        note: remark || '',
+        updatedBy: (payload as any).email || 'admin',
+        date: new Date()
+      };
+      updateFields.$push = { statusHistory: newHistoryEntry };
+    }
+
+    if (progressPercentage !== undefined) {
+      updateFields.progressPercentage = Math.min(100, Math.max(0, Number(progressPercentage)));
+    }
+
+    if (milestones && Array.isArray(milestones)) {
+      updateFields.milestones = milestones;
+    }
+
+    if (sitePhotos && Array.isArray(sitePhotos)) {
+      updateFields.sitePhotos = sitePhotos;
+    }
 
     const updated = await PlanStatus.findByIdAndUpdate(
       id,
-      {
-        currentStatus,
-        $push: { statusHistory: newHistoryEntry }
-      },
+      updateFields,
       { new: true }
     );
 

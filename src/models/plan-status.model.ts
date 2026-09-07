@@ -21,6 +21,19 @@ export interface IPlanDocument {
   uploadedAt: Date;
 }
 
+export interface IPlanMilestone {
+  title: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  completedAt?: Date;
+  note?: string;
+}
+
+export interface ISitePhoto {
+  url: string;
+  caption?: string;
+  uploadedAt: Date;
+}
+
 export interface IPlanStatus extends Document {
   fileId: string;
   clientName: string;
@@ -28,6 +41,9 @@ export interface IPlanStatus extends Document {
   projectTitle: string;
   location: string;
   currentStatus: PlanStatusType;
+  progressPercentage: number;
+  milestones: IPlanMilestone[];
+  sitePhotos: ISitePhoto[];
   statusHistory: IStatusHistoryEntry[];
   documents: IPlanDocument[];
   submissionDate: Date;
@@ -55,6 +71,29 @@ const PlanDocumentSchema = new Schema<IPlanDocument>(
     name: { type: String, required: true },
     url: { type: String, required: true },
     publicId: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const PlanMilestoneSchema = new Schema<IPlanMilestone>(
+  {
+    title: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ['pending', 'in-progress', 'completed'],
+      default: 'pending',
+    },
+    completedAt: { type: Date },
+    note: { type: String },
+  },
+  { _id: false }
+);
+
+const SitePhotoSchema = new Schema<ISitePhoto>(
+  {
+    url: { type: String, required: true },
+    caption: { type: String },
     uploadedAt: { type: Date, default: Date.now },
   },
   { _id: false }
@@ -100,6 +139,26 @@ const PlanStatusSchema = new Schema<IPlanStatus>(
       enum: ['submitted', 'under-review', 'revision-required', 'approved', 'rejected'],
       default: 'submitted',
       index: true,
+    },
+    progressPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    milestones: {
+      type: [PlanMilestoneSchema],
+      default: [
+        { title: 'Soil Test & Site Survey', status: 'completed' },
+        { title: 'Architectural 2D Plan Design', status: 'completed' },
+        { title: '3D Elevation & Structural Drawing', status: 'in-progress' },
+        { title: 'RAJUK / Municipal Submission', status: 'pending' },
+        { title: 'Plan Passing & Final Clearance', status: 'pending' },
+      ],
+    },
+    sitePhotos: {
+      type: [SitePhotoSchema],
+      default: [],
     },
     statusHistory: {
       type: [StatusHistorySchema],

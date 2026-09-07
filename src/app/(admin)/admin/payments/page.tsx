@@ -627,8 +627,23 @@ export default function PaymentsPage() {
                   </table>
                 </div>
 
-                {/* Account Summary */}
-                <div className="flex justify-end">
+                {/* Account Summary & QR Verification */}
+                <div className="flex flex-col sm:flex-row justify-between items-end gap-4 pt-2 border-t border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(`https://triple-h-engineering.vercel.app/verify/${selectedReceipt.payment.planFileRef || selectedReceipt.payment._id}`)}`}
+                      alt="Scan to Verify Receipt"
+                      className="w-14 h-14 border border-slate-300 p-1 rounded bg-white"
+                    />
+                    <div className="text-[10px] text-slate-500 leading-tight">
+                      <p className="font-bold text-slate-800 uppercase">Scan to Verify</p>
+                      <p>Triple H Authenticated Receipt</p>
+                      <p className="font-mono text-emerald-700 font-bold mt-0.5">
+                        REC-{format(new Date(selectedReceipt.installment.paidOn), "yyyyMMdd")}-{selectedReceipt.payment._id?.slice(-4).toUpperCase() || "001"}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="w-64 space-y-1.5 text-xs">
                     <div className="flex justify-between text-slate-600">
                       <span>Total Agreed Bill:</span>

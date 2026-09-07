@@ -484,15 +484,30 @@ export default function AdminQuotationsPage() {
         </div>
 
         {/* Footer & Signature */}
-        <div className="mt-16 pt-8 border-t flex justify-between items-end text-xs text-slate-500">
-          <div>
+        <div className="mt-12 pt-6 border-t flex flex-col sm:flex-row justify-between items-end gap-6 text-xs text-slate-500">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://triple-h-engineering.vercel.app/verify/${docNumber}`)}`}
+                alt="Scan to Verify Document"
+                className="w-16 h-16 border border-slate-300 p-1 rounded bg-white shadow-xs"
+              />
+              <div className="text-[10px] text-slate-500 leading-tight">
+                <p className="font-bold text-slate-800 uppercase">Scan to Verify Authenticity</p>
+                <p>Triple H Digital Seal & IEB Approval</p>
+                <p className="font-mono text-blue-900 font-semibold mt-0.5">{docNumber}</p>
+              </div>
+            </div>
             <p className="font-semibold text-slate-800">Thank you for choosing Triple H!</p>
-            <p>This is a computer-generated official document.</p>
+            <p className="text-[11px]">This is an authenticated computer-generated official document.</p>
           </div>
 
-          <div className="text-center w-48 border-t border-slate-400 pt-1.5">
-            <p className="font-bold text-slate-900">Authorized Signature</p>
-            <p className="text-[11px] text-slate-500">Triple H Plandraft & Engineering</p>
+          <div className="text-center w-48">
+            <div className="border-b border-slate-400 pb-1 mb-1 font-semibold text-slate-800 text-sm">
+              Engr. Hasmot Ali
+            </div>
+            <p className="text-[11px] font-medium text-slate-600">Chief Consultant, Member IEB</p>
+            <p className="text-[10px] text-slate-400">Triple H Engineering Consultancy</p>
           </div>
         </div>
       </div>
