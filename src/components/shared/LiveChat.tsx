@@ -65,7 +65,7 @@ export default function LiveChat() {
       {/* Chat bubble button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full bg-accent text-primary-foreground shadow-xl hover:bg-accent/90 transition-all duration-300 flex items-center justify-center hover:scale-110"
+        className="fixed bottom-6 right-5 z-50 w-14 h-14 rounded-full bg-accent text-primary-foreground shadow-xl hover:bg-accent/90 transition-all duration-300 flex items-center justify-center hover:scale-110"
         aria-label="Live Chat"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
