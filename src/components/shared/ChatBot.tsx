@@ -172,10 +172,9 @@ export default function ChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed z-[200] w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="fixed z-[200] w-[360px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col right-4 sm:right-6"
             style={{
               bottom: "136px",
-              right: "24px",
               height: isMobile ? "65vh" : "520px",
               maxHeight: "calc(100vh - 160px)",
             }}
@@ -360,7 +359,7 @@ export default function ChatBot() {
       </AnimatePresence>
 
       {/* Floating Toggle Button */}
-      <div style={{ position: "fixed", bottom: "72px", right: "24px", zIndex: 200 }}>
+      <div className="fixed z-[200] bottom-[72px] right-4 sm:right-6">
         <motion.button
           onClick={() => setIsOpen(prev => !prev)}
           whileHover={{ scale: 1.05 }}

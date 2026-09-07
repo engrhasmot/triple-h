@@ -80,7 +80,7 @@ export default function FloatingWhatsApp() {
   };
 
   return (
-    <div ref={popoverRef} className="fixed z-50 bottom-24 right-4 sm:bottom-28 sm:right-6">
+    <div ref={popoverRef} className="fixed z-50 bottom-[144px] right-4 sm:bottom-[148px] sm:right-6">
       {/* Popover Card */}
       {isOpen && (
         <div className="mb-3 w-[320px] sm:w-[360px] bg-card text-card-foreground rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
