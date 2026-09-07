@@ -359,42 +359,43 @@ export default function ChatBot() {
       </AnimatePresence>
 
       {/* Floating Toggle Button */}
-      <motion.button
-        onClick={() => setIsOpen(prev => !prev)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed z-[200] w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
-        style={{ bottom: "72px", right: "24px" }}
-        aria-label="Open chat assistant"
-      >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-              <X className="w-6 h-6" />
-            </motion.div>
-          ) : (
-            <motion.div key="chat" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-              <MessageCircle className="w-6 h-6" />
-            </motion.div>
+      <div style={{ position: "fixed", bottom: "72px", right: "24px", zIndex: 200 }}>
+        <motion.button
+          onClick={() => setIsOpen(prev => !prev)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-14 h-14 bg-accent hover:bg-accent/90 text-primary rounded-full shadow-xl flex items-center justify-center relative transition-colors"
+          aria-label="Open chat assistant"
+        >
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                <X className="w-6 h-6" />
+              </motion.div>
+            ) : (
+              <motion.div key="chat" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                <MessageCircle className="w-6 h-6" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Unread badge */}
+          {hasUnread && !isOpen && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+            >
+              1
+            </motion.span>
           )}
-        </AnimatePresence>
 
-        {/* Unread badge */}
-        {hasUnread && !isOpen && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
-          >
-            1
-          </motion.span>
-        )}
-
-        {/* Pulse ring */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-accent animate-ping opacity-20" />
-        )}
-      </motion.button>
+          {/* Pulse ring */}
+          {!isOpen && (
+            <span className="absolute inset-0 rounded-full bg-accent animate-ping opacity-20" />
+          )}
+        </motion.button>
+      </div>
     </>
   );
 }
