@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import Payment from '@/models/payment.model';
 import { getTokenFromRequest, verifyToken } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
+import { sendWhatsApp, paymentReceiptWhatsApp } from '@/lib/whatsapp';
 
 async function checkAuth(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -114,6 +115,23 @@ export async function PATCH(req: NextRequest) {
     if (dueDate !== undefined) payment.dueDate = dueDate ? new Date(dueDate) : undefined;
 
     await payment.save(); // triggers pre-save auto-recalc
+
+    // Send WhatsApp digital money receipt to client
+    if (action === 'add-installment' && installment) {
+      sendWhatsApp(
+        paymentReceiptWhatsApp({
+          clientName: payment.clientName,
+          projectTitle: payment.projectTitle,
+          installmentAmount: Number(installment.amount || 0),
+          installmentType: installment.label || installment.type || 'Installment',
+          totalAmount: payment.totalAmount,
+          totalPaid: payment.paidAmount,
+          dueAmount: payment.dueAmount,
+          note: installment.note,
+        }),
+        payment.phone
+      ).catch(err => console.error('[WhatsApp] Payment receipt failed:', err));
+    }
 
     return NextResponse.json({ success: true, data: payment });
   } catch (err: unknown) {

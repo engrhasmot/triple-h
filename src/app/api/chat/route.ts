@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/db';
+import Inquiry from '@/models/inquiry.model';
+import { sendWhatsApp, newChatLeadWhatsApp } from '@/lib/whatsapp';
 
 interface ChatMessage {
   role: 'user' | 'bot';
@@ -352,6 +355,34 @@ export async function POST(req: Request) {
     }
 
     const result = getSmartResponse(message.trim(), history || []);
+
+    // Detect BD phone number and auto-capture as Inquiry lead
+    const phoneMatch = message.match(/(?:\+?880|0)1[3-9]\d{8}/);
+    if (phoneMatch) {
+      const detectedPhone = phoneMatch[0];
+      (async () => {
+        try {
+          await dbConnect();
+          await Inquiry.create({
+            name: 'AI Chat Visitor',
+            phone: detectedPhone,
+            serviceType: 'consultation',
+            message: `[ChatBot Lead] Visitor said: "${message.trim()}"`,
+            source: 'website',
+            status: 'new',
+            notes: `Auto-captured from AI Chat on ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' })}`,
+          });
+          await sendWhatsApp(
+            newChatLeadWhatsApp({
+              phone: detectedPhone,
+              message: message.trim(),
+            })
+          );
+        } catch (leadErr) {
+          console.error('[ChatBot Lead Capture Error]:', leadErr);
+        }
+      })();
+    }
 
     return NextResponse.json({
       success: true,

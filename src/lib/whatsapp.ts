@@ -384,3 +384,75 @@ export function dailySummaryWhatsApp(data: {
     `Triple H Plandraft & Engineering`,
   ].join('\n');
 }
+
+export function newChatLeadWhatsApp(data: {
+  phone: string;
+  message: string;
+}): string {
+  return [
+    `🤖 *নতুন AI ChatBot Lead!*`,
+    ``,
+    `📞 ফোন: *${data.phone}*`,
+    `💬 ক্লায়েন্টের মেসেজ:`,
+    `"${data.message}"`,
+    ``,
+    `⏰ সময়: ${nowBD()}`,
+    ``,
+    `Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/inquiries`,
+    ``,
+    `Triple H Plandraft & Engineering`,
+  ].join('\n');
+}
+
+export function paymentReceiptWhatsApp(data: {
+  clientName: string;
+  projectTitle: string;
+  installmentAmount: number;
+  installmentType: string;
+  totalAmount: number;
+  totalPaid: number;
+  dueAmount: number;
+  note?: string;
+}): string {
+  const lines = [
+    `🧾 *মানি রিসিট (Money Receipt)*`,
+    `*Triple H Plandraft & Engineering*`,
+    ``,
+    `প্রিয় ${data.clientName},`,
+    `আপনার পেমেন্ট সফলভাবে জমা হয়েছে ✅`,
+    ``,
+    `🏗️ প্রজেক্ট: *${data.projectTitle}*`,
+    `💵 জমা কিস্তি: *${formatBDT(data.installmentAmount)}* (${data.installmentType})`,
+    `💰 মোট চুক্তি: ${formatBDT(data.totalAmount)}`,
+    `✅ মোট পরিশোধিত: *${formatBDT(data.totalPaid)}*`,
+    `⏳ বর্তমান বকেয়া: *${formatBDT(data.dueAmount)}*`,
+  ];
+  if (data.note) lines.push(`📝 নোট: ${data.note}`);
+  lines.push(``);
+  lines.push(`তারিখ: ${nowBD()}`);
+  lines.push(`📞 যেকোনো তথ্যে: 01778-506500`);
+  lines.push(``);
+  lines.push(`ধন্যবাদ আমাদের সাথে থাকার জন্য! 🙏`);
+  return lines.join('\n');
+}
+
+export function newReviewAdminWhatsApp(data: {
+  clientName: string;
+  rating: number;
+  content: string;
+  designation?: string;
+}): string {
+  return [
+    `⭐ *ওয়েবসাইটে নতুন Review জমা হয়েছে!*`,
+    ``,
+    `👤 নাম: *${data.clientName}* ${data.designation ? `(${data.designation})` : ''}`,
+    `🌟 রেটিং: ${'⭐'.repeat(Math.max(1, Math.min(5, data.rating)))} (${data.rating}/5)`,
+    `💬 মন্তব্য:`,
+    `"${data.content}"`,
+    ``,
+    `⚠️ এটি বর্তমানে Pending আছে। অনুমোদন করতে ভিজিট করুন:`,
+    `🌐 ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/testimonials`,
+    ``,
+    `Triple H Plandraft & Engineering`,
+  ].join('\n');
+}
