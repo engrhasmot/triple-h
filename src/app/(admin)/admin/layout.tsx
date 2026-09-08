@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ const allNavItems = [
   { href: "/admin/inspections", label: "Inspections", icon: ClipboardCheck },
   { href: "/admin/site-visits", label: "Site Visits", icon: MapPin },
   { href: "/admin/work-orders", label: "Work Orders", icon: ClipboardList },
+  { href: "/admin/plan-tracker", label: "Plan Tracker", icon: Compass },
   { href: "/admin/files", label: "Plan Files", icon: FileText },
   { href: "/admin/payments", label: "Payments", icon: Banknote },
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },
@@ -42,6 +43,7 @@ const allowedHrefsByRole: Record<string, string[]> = {
     "/admin/testimonials",
     "/admin/faqs",
     "/admin/material-calculator",
+    "/admin/plan-tracker",
     "/admin/files",
     "/admin/media",
     "/admin/analytics",

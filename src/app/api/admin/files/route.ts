@@ -145,3 +145,22 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update file status' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const payload = await checkAuth(req);
+  if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission((payload as any).role, "canManageFiles")) {
+    return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+  }
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Missing file id" }, { status: 400 });
+    await dbConnect();
+    await PlanStatus.findByIdAndDelete(id);
+    return NextResponse.json({ success: true, message: "Plan file deleted" });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to delete file" }, { status: 500 });
+  }
+}
+
