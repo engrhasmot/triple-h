@@ -363,26 +363,46 @@ export function dailySummaryWhatsApp(data: {
   pendingInquiries: number;
   pendingBookings: number;
   pendingWorkOrders: number;
+  paymentsReceivedLast24h?: number;
+  pendingSubmissions?: number;
+  activePlans?: number;
+  senderNumber?: string;
+  recipientNumber?: string;
 }): string {
-  return [
-    `📊 *Triple H — Daily Report*`,
+  const sender = data.senderNumber || "+880 1778-506500";
+  const recipient = data.recipientNumber || "+880 1631-186218";
+  const payments = data.paymentsReceivedLast24h !== undefined ? `৳${data.paymentsReceivedLast24h.toLocaleString('en-BD')}` : '৳০';
+
+  const lines = [
+    `📊 *ট্রিপল এইচ — দৈনিক কার্যবিবরণী (Daily Report)*`,
+    `🏢 *Triple H Engineering Consultancy*`,
+    `📞 প্রেরক (Office): ${sender}`,
+    `📱 প্রাপক (Target): ${recipient}`,
     `📅 তারিখ: ${data.date}`,
     ``,
-    `📈 *গত ২৪ ঘণ্টার একনজর:*`,
-    `• নতুন Inquiry: *${data.inquiriesLast24h}* টি`,
-    `• নতুন Appointment: *${data.bookingsLast24h}* টি`,
-    `• নতুন Work Order: *${data.workOrdersLast24h}* টি`,
-    `• Website Visitors: *${data.pageViewsLast24h.toLocaleString()}* বার`,
+    `📈 *গত ২৪ ঘণ্টার অগ্রগতি ও হিসাব:*`,
+    `• নতুন ইনকোয়ারি (Inquiries): *${data.inquiriesLast24h}* টি`,
+    `• নতুন অ্যাপয়েন্টমেন্ট/ভিজিট: *${data.bookingsLast24h}* টি`,
+    `• নতুন ওয়ার্ক অর্ডার: *${data.workOrdersLast24h}* টি`,
+    `• আদায়কৃত পেমেন্ট (Payments): *${payments}*`,
+    `• ওয়েবসাইট ভিজিটর (Pageviews): *${data.pageViewsLast24h.toLocaleString()}* বার`,
     ``,
-    `⏳ *বর্তমানে পেন্ডিং আছে:*`,
-    `• Pending Inquiries: *${data.pendingInquiries}*`,
-    `• Pending Bookings: *${data.pendingBookings}*`,
-    `• Pending Work Orders: *${data.pendingWorkOrders}*`,
+    `⏳ *বর্তমানে সক্রিয় ও পেন্ডিং কাজসমূহ:*`,
+    `• পেন্ডিং ইনকোয়ারি: *${data.pendingInquiries}* টি`,
+    `• পেন্ডিং সাইট ভিজিট/অ্যাপয়েন্টমেন্ট: *${data.pendingBookings}* টি`,
+    `• পেন্ডিং অনলাইন TrxID যাচাই: *${data.pendingSubmissions || 0}* টি`,
+    `• চলমান প্ল্যান ফাইল (Active Plans): *${data.activePlans || 0}* টি`,
+    `• পেন্ডিং ওয়ার্ক অর্ডার: *${data.pendingWorkOrders}* টি`,
     ``,
-    `🌐 Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/dashboard`,
+    `🌐 ড্যাশবোর্ড সরাসরি দেখতে:`,
+    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/dashboard`,
     ``,
-    `Triple H Plandraft & Engineering`,
-  ].join('\n');
+    `ধন্যবাদান্তে,`,
+    `ইঞ্জিনিয়ার মোঃ হাসমত আলী (Managing Director)`,
+    `ট্রিপল এইচ ইঞ্জিনিয়ারিং কনসালটেন্সি`,
+  ];
+
+  return lines.join('\n');
 }
 
 export function newChatLeadWhatsApp(data: {

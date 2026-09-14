@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass, BellRing, FlaskConical, Package, Users2, KanbanSquare, HardHat, Ruler, Layers, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -31,6 +31,16 @@ const allNavItems = [
   { href: "/admin/activity-log", label: "Activity Log", icon: History },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  // --- Site & QC Tools ---
+  { href: "/admin/payment-reminders", label: "Payment Reminders", icon: BellRing },
+  { href: "/admin/casting-qc", label: "Casting QC", icon: FlaskConical },
+  { href: "/admin/site-inventory", label: "Site Inventory", icon: Package },
+  { href: "/admin/site-hazira", label: "Site Hazira", icon: Users2 },
+  { href: "/admin/tasks", label: "Tasks", icon: KanbanSquare },
+  { href: "/admin/contractors", label: "Contractors", icon: HardHat },
+  { href: "/admin/pile-calculator", label: "Pile Calculator", icon: Ruler },
+  { href: "/admin/soil-test", label: "Soil Test", icon: Layers },
+  { href: "/admin/completion-certificate", label: "Certificates", icon: Award },
 ];
 
 const allowedHrefsByRole: Record<string, string[]> = {

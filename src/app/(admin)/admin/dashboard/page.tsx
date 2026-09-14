@@ -12,11 +12,15 @@ import {
   MapPin, 
   Phone, 
   MessageCircle, 
-  Clock 
+  Clock,
+  Send,
+  ExternalLink,
+  Copy
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { adminFetch } from "@/lib/admin-fetch";
@@ -48,6 +52,52 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastBackup, setLastBackup] = useState<string | null>(null);
+
+  // Daily WhatsApp Report State
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const fetchDailyReport = async () => {
+    setLoadingReport(true);
+    try {
+      const res = await adminFetch("/api/admin/daily-report");
+      const json = await res.json();
+      if (json.success && json.data) {
+        setReportData(json.data);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load daily report preview");
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  const handleSendReport = async () => {
+    setSendingReport(true);
+    try {
+      const res = await adminFetch("/api/admin/daily-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetNumber: "+880 1631-186218" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message || "Daily report sent to +880 1631-186218!");
+        if (json.data) {
+          setReportData((prev: any) => ({ ...prev, ...json.data }));
+        }
+      } else {
+        toast.error(json.error || "Failed to send report");
+      }
+    } catch (err) {
+      toast.error("Error sending daily report");
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   const fetchDashboard = async () => {
     try {
@@ -136,9 +186,23 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-1">Welcome back. Here&apos;s what&apos;s happening today.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
+          <p className="text-muted-foreground mt-1">Welcome back. Here&apos;s what&apos;s happening today.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              fetchDailyReport();
+              setReportModalOpen(true);
+            }}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs text-xs sm:text-sm"
+          >
+            <MessageCircle className="w-4 h-4" />
+            WhatsApp Daily Report
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Grid */}
@@ -396,6 +460,119 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Daily WhatsApp Report Modal */}
+      <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-emerald-600" />
+              WhatsApp Daily Report System
+            </DialogTitle>
+            <DialogDescription>
+              অফিসিয়াল নম্বর থেকে নির্ধারিত নম্বরে দৈনিক কার্যবিবরণী ও প্রগ্রেস সামারি
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            {/* Numbers Badges */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/40 p-3 rounded-xl border text-xs">
+              <div>
+                <span className="text-muted-foreground block font-medium">প্রেরক (Office / Sender):</span>
+                <span className="font-mono font-bold text-foreground">+880 1778-506500</span>
+                <span className="text-[10px] text-muted-foreground block">Engr. Md. Hasmot Ali (Triple H)</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block font-medium">প্রাপক (Recipient / Target):</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">+880 1631-186218</span>
+                <span className="text-[10px] text-muted-foreground block">Daily Report Destination</span>
+              </div>
+            </div>
+
+            {loadingReport ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground space-y-2">
+                <Loader2 className="w-7 h-7 animate-spin text-emerald-600" />
+                <p className="text-xs font-medium">রিপোর্টের ডাটা সংগ্রহ করা হচ্ছে...</p>
+              </div>
+            ) : reportData ? (
+              <div className="space-y-3">
+                {/* Metrics Summary Strip */}
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
+                  <div className="bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-900/40">
+                    <p className="text-[10px] text-muted-foreground">নতুন লিড</p>
+                    <p className="text-sm font-bold text-blue-600">{reportData.inquiriesLast24h || 0}</p>
+                  </div>
+                  <div className="bg-purple-500/10 p-2 rounded border border-purple-200 dark:border-purple-900/40">
+                    <p className="text-[10px] text-muted-foreground">ভিজিট</p>
+                    <p className="text-sm font-bold text-purple-600">{reportData.bookingsLast24h || 0}</p>
+                  </div>
+                  <div className="bg-emerald-500/10 p-2 rounded border border-emerald-200 dark:border-emerald-900/40">
+                    <p className="text-[10px] text-muted-foreground">আদায়</p>
+                    <p className="text-sm font-bold text-emerald-600">৳{(reportData.paymentsReceivedLast24h || 0).toLocaleString('en-BD')}</p>
+                  </div>
+                  <div className="bg-amber-500/10 p-2 rounded border border-amber-200 dark:border-amber-900/40">
+                    <p className="text-[10px] text-muted-foreground">চলমান প্ল্যান</p>
+                    <p className="text-sm font-bold text-amber-600">{reportData.activePlans || 0}</p>
+                  </div>
+                  <div className="bg-rose-500/10 p-2 rounded border border-rose-200 dark:border-rose-900/40">
+                    <p className="text-[10px] text-muted-foreground">পেন্ডিং TrxID</p>
+                    <p className="text-sm font-bold text-rose-600">{reportData.pendingSubmissions || 0}</p>
+                  </div>
+                </div>
+
+                {/* Formatted Message Box */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-semibold text-muted-foreground">হোয়াটসঅ্যাপ বার্তা প্রিভিউ:</label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[11px] gap-1 px-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(reportData.reportMessage);
+                        toast.success("রিপোর্ট কপি করা হয়েছে!");
+                      }}
+                    >
+                      <Copy className="w-3 h-3" /> কপি টেক্সট
+                    </Button>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg border font-mono text-xs whitespace-pre-wrap max-h-56 overflow-y-auto">
+                    {reportData.reportMessage}
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t">
+                  {reportData.directWhatsAppUrl && (
+                    <a
+                      href={reportData.directWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-md border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      হোয়াটসঅ্যাপে খুলুন (Direct Chat)
+                    </a>
+                  )}
+
+                  <Button
+                    onClick={handleSendReport}
+                    disabled={sendingReport}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
+                  >
+                    {sendingReport ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    স্বয়ংক্রিয়ভাবে পাঠান (+880 1631-186218)
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
