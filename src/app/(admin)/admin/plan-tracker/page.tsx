@@ -307,7 +307,7 @@ export default function AdminPlanTrackerPage() {
       `🔍 *অনলাইনে লাইভ আপডেট দেখতে:* \n${queryUrl}\n\n` +
       `যেকোনো প্রয়োজনে কল করুন:\n` +
       `📞 ০১৭৭৮-৫০৬৫০০\n` +
-      `ইঞ্জিনিয়ার মোঃ হাসমত আলী (B.Sc. Civil Engr, AUST)`;
+      `ইঞ্জিনিয়ার মোঃ হাসমত আলী (প্রতিষ্ঠাতা ও প্রধান পরামর্শক)`;
 
     const phoneDigits = plan.phone.replace(/[^0-9]/g, "");
     const formattedPhone = phoneDigits.startsWith("88") ? phoneDigits : `88${phoneDigits}`;
@@ -1222,8 +1222,8 @@ export default function AdminPlanTrackerPage() {
                 <div className="text-center">
                   <div className="w-52 border-t border-gray-400 pt-1">
                     <p className="font-bold text-gray-900">ইঞ্জিনিয়ার মোঃ হাসমত আলী</p>
-                    <p className="text-[10px] text-gray-600">B.Sc. in Civil Engineering (AUST)</p>
                     <p className="text-[10px] text-emerald-800 font-semibold">প্রতিষ্ঠাতা ও প্রধান পরামর্শক</p>
+                    <p className="text-[10px] text-gray-600">ট্রিপল এইচ ইঞ্জিনিয়ারিং কনসালটেন্সি</p>
                   </div>
                 </div>
               </div>

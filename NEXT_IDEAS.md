@@ -1,6 +1,6 @@
 # 🚀 Triple H Engineering Consultancy — Future Feature Ideas & Product Roadmap
 > **প্রজেক্ট:** ট্রিপল এইচ ইঞ্জিনিয়ারিং কনসালটেন্সি (Triple H Engineering Consultancy)  
-> **প্রধান প্রকৌশলী:** ইঞ্জিনিয়ার মোঃ হাসমত আলী (B.Sc. in Civil Engineering, AUST)  
+> **প্রধান প্রকৌশলী:** ইঞ্জিনিয়ার মোঃ হাসমত আলী (প্রতিষ্ঠাতা ও প্রধান পরামর্শক)  
 > **লাইভ ওয়েবসাইট:** [https://triple-h-engineering.vercel.app](https://triple-h-engineering.vercel.app)  
 > **সর্বশেষ আপডেট:** সেপ্টেম্বর ২০২৬
 

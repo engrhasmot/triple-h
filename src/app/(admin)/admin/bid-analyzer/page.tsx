@@ -425,7 +425,7 @@ export default function ComparativeBidAnalyzerPage() {
           </div>
           <div className="text-right space-y-1">
             <div className="font-bold text-foreground">ইঞ্জিনিয়ার মোঃ হাসমত আলী</div>
-            <div className="text-muted-foreground text-[11px]">B.Sc. in Civil Engineering (AUST)</div>
+            <div className="text-muted-foreground text-[11px]">প্রতিষ্ঠাতা ও প্রধান পরামর্শক</div>
             <div className="w-36 border-b border-border mt-3 mb-1 ml-auto" />
             <div className="text-[10px] text-muted-foreground">অনুমোদনকারী প্রকৌশলী</div>
           </div>

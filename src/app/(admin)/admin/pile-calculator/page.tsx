@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo } from "react";
 import { Calculator, Printer, Info } from "lucide-react";
@@ -121,7 +121,7 @@ export default function PileCalculatorPage() {
   </table>
   <div class="divider"></div>
   <div class="footer">
-    <p>Engineer: Md. Hasmot Ali (B.Sc. Civil, AUST)</p>
+    <p>Engineer: Md. Hasmot Ali (Chief Engineering Consultant)</p>
     <p>Organization: Triple H Plandraft &amp; Engineering</p>
     <p>Date: ${todayStr()}</p>
     <br/>
