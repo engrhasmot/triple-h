@@ -1036,7 +1036,7 @@ export default function AdminMaterialCalculatorPage() {
                   </div>
                   <div className="text-right text-[11px] text-slate-700 leading-tight">
                     <p className="font-bold">ইঞ্জিনিয়ার মোঃ হাসমত আলী</p>
-                    <p className="text-[10px] text-slate-600">B.Sc. in Civil Engineering (IEB Member)</p>
+                    <p className="text-[10px] text-slate-600">প্রতিষ্ঠাতা ও প্রধান পরামর্শক</p>
                     <p className="text-[10px]">📞 01778-506500 | 01631-186218</p>
                     <p className="text-[10px]">নয়াবাড়ী, রেডিও কলোনি, সাভার, ঢাকা</p>
                   </div>

@@ -578,9 +578,9 @@ export default function SoilTestPage() {
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-foreground">Engr. Md. Hasmot Ali</div>
-                  <div className="text-muted-foreground">B.Sc. Civil Engineering (AUST)</div>
+                  <div className="text-muted-foreground text-[10px]">Founder & Chief Consultant</div>
                   <div className="w-32 border-b border-border mt-3 mb-1 ml-auto" />
-                  <div className="text-[10px] text-muted-foreground">Geotechnical Specialist</div>
+                  <div className="text-[10px] text-muted-foreground">Triple H Engineering Consultancy</div>
                 </div>
               </div>
             </div>
