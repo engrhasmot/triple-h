@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass, BellRing, FlaskConical, Package, Users2, KanbanSquare, HardHat, Ruler, Layers, Award, Megaphone, Scale } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass, BellRing, FlaskConical, Package, Users2, KanbanSquare, HardHat, Ruler, Layers, Award, Megaphone, Scale, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 const allNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/for-hasu", label: "For Hasu", icon: Crown },
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },
   { href: "/admin/team", label: "Team", icon: Users },
@@ -49,6 +50,7 @@ const allowedHrefsByRole: Record<string, string[]> = {
   admin: allNavItems.map((i) => i.href),
   editor: [
     "/admin/dashboard",
+    "/admin/for-hasu",
     "/admin/projects",
     "/admin/blog",
     "/admin/team",
