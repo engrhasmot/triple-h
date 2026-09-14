@@ -57,6 +57,14 @@ const allowedHrefsByRole: Record<string, string[]> = {
     "/admin/files",
     "/admin/media",
     "/admin/analytics",
+    "/admin/casting-qc",
+    "/admin/site-inventory",
+    "/admin/site-hazira",
+    "/admin/tasks",
+    "/admin/contractors",
+    "/admin/pile-calculator",
+    "/admin/soil-test",
+    "/admin/completion-certificate",
   ],
 };
 
