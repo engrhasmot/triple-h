@@ -123,6 +123,30 @@ export default function AdminAgreementsPage() {
     fetchAgreements();
   }, [fetchAgreements]);
 
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("convert_quotation_data");
+      if (stored) {
+        sessionStorage.removeItem("convert_quotation_data");
+        const data = JSON.parse(stored);
+        if (data.clientName) setClientName(data.clientName);
+        if (data.clientPhone) setClientPhone(data.clientPhone);
+        if (data.projectTitle) setProjectTitle(data.projectTitle);
+        if (data.projectLocation) setProjectLocation(data.projectLocation);
+        if (data.totalFee) setTotalFee(Number(data.totalFee));
+        if (data.advanceFee) setAdvanceFee(Number(data.advanceFee));
+        if (data.scopeOfWork && Array.isArray(data.scopeOfWork) && data.scopeOfWork.length > 0) {
+          setScopeOfWork(data.scopeOfWork);
+        }
+        setAgreementNumber(`AGR-${Date.now().toString().slice(-5)}`);
+        setActiveTab("create");
+        toast.success("কোটেশন থেকে সফলভাবে চুক্তিপত্রের তথ্য পূরণ করা হয়েছে!");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const resetForm = () => {
     setEditId(null);
     setAgreementNumber(`AGR-${Date.now().toString().slice(-5)}`);
@@ -852,7 +876,7 @@ export default function AdminAgreementsPage() {
                     </div>
                     <div className="text-right text-[11px] font-sans text-slate-700 leading-tight">
                       <p className="font-bold">ইঞ্জিনিয়ার মোঃ হাসমত আলী</p>
-                      <p className="text-[10px] text-slate-600">B.Sc. in Civil Engineering (IEB Member)</p>
+                      <p className="text-[10px] text-slate-600">প্রতিষ্ঠাতা ও প্রধান পরামর্শক</p>
                       <p className="text-[10px]">📞 01778-506500 | 01631-186218</p>
                       <p className="text-[10px]">নয়াবাড়ী, রেডিও কলোনি, সাভার, ঢাকা</p>
                     </div>

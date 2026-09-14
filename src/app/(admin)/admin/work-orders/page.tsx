@@ -12,6 +12,7 @@ import {
   Loader2,
   DollarSign,
   MessageCircle,
+  Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -118,6 +119,70 @@ export default function WorkOrdersAdminPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Create Work Order Modal State
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    projectTitle: "",
+    projectLocation: "Dhaka, Bangladesh",
+    requirements: "Civil & Structural Engineering Services",
+    estimatedBudget: "",
+    notes: "",
+  });
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("convert_workorder_data");
+      if (stored) {
+        sessionStorage.removeItem("convert_workorder_data");
+        const data = JSON.parse(stored);
+        setCreateFormData({
+          name: data.clientName || "",
+          phone: data.clientPhone || "",
+          email: "",
+          projectTitle: data.projectTitle || "",
+          projectLocation: data.projectLocation || "Dhaka, Bangladesh",
+          requirements: data.requirements || "Civil & Structural Engineering Services",
+          estimatedBudget: data.estimatedBudget || "",
+          notes: "Converted from official quotation",
+        });
+        setCreateModalOpen(true);
+        toast.success("কোটেশন থেকে সফলভাবে ওয়ার্ক অর্ডারের তথ্য পূরণ করা হয়েছে!");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleCreateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createFormData.name || !createFormData.phone || !createFormData.projectTitle) {
+      toast.error("নাম, ফোন নম্বর ও প্রজেক্টের নাম আবশ্যক");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/work-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createFormData),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create work order");
+      }
+      toast.success("ওয়ার্ক অর্ডার সফলভাবে তৈরি হয়েছে!");
+      setCreateModalOpen(false);
+      fetchWorkOrders();
+    } catch (err: any) {
+      toast.error(err.message || "Error creating work order");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const fetchWorkOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -215,6 +280,9 @@ export default function WorkOrdersAdminPage() {
             Manage client work orders and project requests.
           </p>
         </div>
+        <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
+          <Plus className="w-4 h-4" /> নতুন ওয়ার্ক অর্ডার
+        </Button>
       </div>
 
       <Card>
@@ -553,6 +621,100 @@ export default function WorkOrdersAdminPage() {
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>নতুন ওয়ার্ক অর্ডার তৈরি করুন</DialogTitle>
+            <DialogDescription>
+              ক্লায়েন্টের তথ্য এবং প্রজেক্টের কাজের বিবরণ দিয়ে নতুন ওয়ার্ক অর্ডার যোগ করুন।
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateOrder} className="space-y-3 pt-2">
+            <div>
+              <label className="text-xs font-semibold">ক্লায়েন্টের নাম *</label>
+              <Input
+                required
+                value={createFormData.name}
+                onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                placeholder="ক্লায়েন্টের নাম"
+                className="mt-1 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-semibold">মোবাইল নম্বর *</label>
+                <Input
+                  required
+                  value={createFormData.phone}
+                  onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
+                  placeholder="01XXXXXXXXX"
+                  className="mt-1 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold">ইমেইল (ঐচ্ছিক)</label>
+                <Input
+                  type="email"
+                  value={createFormData.email}
+                  onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+                  placeholder="client@example.com"
+                  className="mt-1 text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold">প্রজেক্ট টাইটেল *</label>
+              <Input
+                required
+                value={createFormData.projectTitle}
+                onChange={(e) => setCreateFormData({ ...createFormData, projectTitle: e.target.value })}
+                placeholder="উদাঃ গুলশান ভিলা ৭ তলা ভবন"
+                className="mt-1 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-semibold">প্রজেক্ট লোকেশন</label>
+                <Input
+                  value={createFormData.projectLocation}
+                  onChange={(e) => setCreateFormData({ ...createFormData, projectLocation: e.target.value })}
+                  placeholder="ঢাকা, বাংলাদেশ"
+                  className="mt-1 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold">প্রাক্কলিত বাজেট / ফি</label>
+                <Input
+                  value={createFormData.estimatedBudget}
+                  onChange={(e) => setCreateFormData({ ...createFormData, estimatedBudget: e.target.value })}
+                  placeholder="৳ ৫০,০০০"
+                  className="mt-1 text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold">কাজের পরিধি / রিকোয়ারমেন্ট</label>
+              <Textarea
+                rows={3}
+                value={createFormData.requirements}
+                onChange={(e) => setCreateFormData({ ...createFormData, requirements: e.target.value })}
+                placeholder="2D Plan, 3D Exterior, Structural Design..."
+                className="mt-1 text-sm"
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+                বাতিল
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                সংরক্ষণ করুন
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

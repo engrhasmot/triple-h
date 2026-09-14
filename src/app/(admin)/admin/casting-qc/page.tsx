@@ -723,7 +723,6 @@ export default function CastingQCPage() {
                 </div>
                 <div className="text-right space-y-1">
                   <div className="font-bold text-foreground">Engr. Md. Hasmot Ali</div>
-                  <div className="text-muted-foreground">B.Sc. in Civil Engineering (AUST)</div>
                   <div className="text-muted-foreground font-semibold">Triple H Plandraft & Engineering</div>
                   <div className="pt-4 border-t border-foreground/30 w-44 ml-auto text-[10px] text-muted-foreground">
                     Authorized Signatory & Seal

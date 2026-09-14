@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass, BellRing, FlaskConical, Package, Users2, KanbanSquare, HardHat, Ruler, Layers, Award } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, LogOut, Loader2, Menu, Star, Users, HelpCircle, Inbox, BarChart3, ImageIcon, Newspaper, History, Globe, Banknote, Calculator, MapPin, ClipboardList, Settings, Receipt, Scroll, ClipboardCheck, Hammer, Compass, BellRing, FlaskConical, Package, Users2, KanbanSquare, HardHat, Ruler, Layers, Award, Megaphone, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -41,6 +41,8 @@ const allNavItems = [
   { href: "/admin/pile-calculator", label: "Pile Calculator", icon: Ruler },
   { href: "/admin/soil-test", label: "Soil Test", icon: Layers },
   { href: "/admin/completion-certificate", label: "Certificates", icon: Award },
+  { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
+  { href: "/admin/bid-analyzer", label: "Bid Analyzer", icon: Scale },
 ];
 
 const allowedHrefsByRole: Record<string, string[]> = {
@@ -65,6 +67,8 @@ const allowedHrefsByRole: Record<string, string[]> = {
     "/admin/pile-calculator",
     "/admin/soil-test",
     "/admin/completion-certificate",
+    "/admin/broadcast",
+    "/admin/bid-analyzer",
   ],
 };
 

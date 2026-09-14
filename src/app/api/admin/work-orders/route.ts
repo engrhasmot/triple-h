@@ -50,6 +50,39 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function POST(req: NextRequest) {
+  const session = await authenticate(req);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!hasPermission((session as any).role, "canManageInquiries")) {
+    return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+  }
+  try {
+    await dbConnect();
+    const body = await req.json();
+    const { name, phone, email, projectTitle, projectLocation, requirements, estimatedBudget, notes, status } = body;
+    if (!name || !phone || !projectTitle) {
+      return NextResponse.json({ error: "Name, phone, and project title are required" }, { status: 400 });
+    }
+    const order = await WorkOrder.create({
+      name,
+      phone,
+      email,
+      projectTitle,
+      projectLocation: projectLocation || "Dhaka, Bangladesh",
+      requirements: requirements || "Civil & Structural Engineering Services",
+      estimatedBudget,
+      notes,
+      status: status || "pending",
+    });
+    return NextResponse.json({ success: true, data: order }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to create work order" }, { status: 500 });
+  }
+}
+
+
 export async function PATCH(req: NextRequest) {
   const session = await authenticate(req);
   if (!session) {

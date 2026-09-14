@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useId } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Printer,
@@ -14,6 +15,9 @@ import {
   Calendar,
   CheckCircle2,
   MessageCircle,
+  Scroll,
+  ClipboardList,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +49,7 @@ const COMMON_SERVICES = [
 ];
 
 export default function AdminQuotationsPage() {
+  const router = useRouter();
   const [docType, setDocType] = useState<"quotation" | "bill">("quotation");
   const [docNumber, setDocNumber] = useState(`TH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -184,8 +189,94 @@ export default function AdminQuotationsPage() {
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
+  const convertToAgreement = () => {
+    if (!clientName.trim()) {
+      toast.error("অনুগ্রহ করে ক্লায়েন্টের নাম লিখুন");
+      return;
+    }
+    const scopeOfWork = items
+      .filter((it) => it.description.trim() !== "")
+      .map((it) => `${it.description} (${it.qty} ${it.unit})`);
+
+    const quotationData = {
+      clientName,
+      clientPhone,
+      projectTitle: projectTitle || "Building Design Project",
+      projectLocation: projectLocation || "Dhaka, Bangladesh",
+      scopeOfWork,
+      totalFee: grandTotal,
+      advanceFee: advancePaid,
+      dueFee: dueAmount,
+    };
+
+    sessionStorage.setItem("convert_quotation_data", JSON.stringify(quotationData));
+    toast.success("কোটেশন ডাটা চুক্তিপত্রে স্থানান্তরিত করা হয়েছে!");
+    router.push("/admin/agreements?fromQuotation=1");
+  };
+
+  const convertToWorkOrder = () => {
+    if (!clientName.trim()) {
+      toast.error("অনুগ্রহ করে ক্লায়েন্টের নাম লিখুন");
+      return;
+    }
+    const scopeOfWork = items
+      .filter((it) => it.description.trim() !== "")
+      .map((it) => `${it.description} (${it.qty} ${it.unit})`)
+      .join(", ");
+
+    const quotationData = {
+      clientName,
+      clientPhone,
+      projectTitle: projectTitle || "Building Design Project",
+      projectLocation: projectLocation || "Dhaka, Bangladesh",
+      requirements: scopeOfWork || "Civil & Structural Engineering Services",
+      estimatedBudget: `৳ ${grandTotal.toLocaleString("en-BD")}`,
+    };
+
+    sessionStorage.setItem("convert_workorder_data", JSON.stringify(quotationData));
+    toast.success("কোটেশন ডাটা ওয়ার্ক অর্ডারে স্থানান্তরিত করা হয়েছে!");
+    router.push("/admin/work-orders?fromQuotation=1");
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-16">
+      {/* Smart Workflow Action Banner */}
+      <div className="bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:hidden">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary text-primary-foreground">
+              Smart Workflow
+            </span>
+            <span className="text-sm font-semibold text-foreground">
+              ১-ক্লিকে কোটেশন থেকে চুক্তিপত্র বা ওয়ার্ক অর্ডার রূপান্তর
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            পুনরায় টাইপ না করেই ক্লায়েন্টের নাম, কাজের বিবরণ ও মোট টাকার পরিমাণ সরাসরি ট্রান্সফার করুন।
+          </p>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            size="sm"
+            onClick={convertToAgreement}
+            className="text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+          >
+            <Scroll className="w-3.5 h-3.5" />
+            চুক্তিপত্রে রূপান্তর (To Agreement)
+            <ArrowRight className="w-3 h-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={convertToWorkOrder}
+            className="text-xs gap-1.5 border-primary/30 hover:bg-primary/10"
+          >
+            <ClipboardList className="w-3.5 h-3.5 text-primary" />
+            ওয়ার্ক অর্ডার তৈরি
+          </Button>
+        </div>
+      </div>
+
       {/* Top Controls Bar (hidden during print) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden bg-card p-4 rounded-xl border">
         <div>

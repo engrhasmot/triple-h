@@ -312,7 +312,6 @@ export default function CompletionCertificatePage() {
 
               <div className="text-right space-y-1">
                 <div className="font-bold text-foreground text-sm">Engr. Md. Hasmot Ali</div>
-                <div className="text-muted-foreground text-[11px]">B.Sc. in Civil Engineering (AUST)</div>
                 <div className="text-muted-foreground font-semibold text-[11px]">Founder & Principal Engineer</div>
                 <div className="text-[10px] text-muted-foreground">Triple H Plandraft & Engineering</div>
                 <div className="pt-6 border-t border-foreground/30 w-44 ml-auto text-[10px] text-muted-foreground">
