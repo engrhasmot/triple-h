@@ -30,3 +30,28 @@ export function getTokenFromRequest(req: Request): string | null {
   if (auth?.startsWith("Bearer ")) return auth.slice(7);
   return null;
 }
+
+export async function signClientToken(payload: any) {
+  return new SignJWT({ ...payload, type: 'client' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('30d')
+    .sign(encodedKey);
+}
+
+export async function verifyClientToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, encodedKey);
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+export function getClientTokenFromRequest(req: Request): string | null {
+  const cookie = (req as any).cookies?.get?.("client_token")?.value;
+  if (cookie) return cookie;
+  const auth = req.headers.get("authorization");
+  if (auth?.startsWith("Bearer ")) return auth.slice(7);
+  return null;
+}

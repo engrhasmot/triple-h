@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, Phone, Globe, ShieldCheck } from "lucide-react";
+import { Menu, X, Phone, Globe, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useLanguage } from "@/context/LanguageContext";
@@ -128,6 +128,11 @@ export default function Navbar() {
             </button>
 
             <div className="flex items-center gap-2 pl-3 border-l border-border ml-2">
+              <Link href="/client-portal">
+                <Button size="sm" variant="ghost" className="font-bold text-foreground hover:text-accent hover:bg-secondary hidden 2xl:flex text-xs h-9 gap-1.5">
+                  <User className="w-3.5 h-3.5 text-accent" /> ক্লায়েন্ট পোর্টাল
+                </Button>
+              </Link>
               <Link href="/sketch-upload">
                 <Button size="sm" variant="outline" className="font-bold border-accent/40 text-accent hover:bg-accent/10 hidden xl:flex text-xs h-9 gap-1.5">
                   📐 নকশা পাঠান
