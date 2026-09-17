@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default async function PlanStatusRedirect({
+export default async function PaymentRedirect({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -12,5 +12,5 @@ export default async function PlanStatusRedirect({
     )
   ).toString();
 
-  redirect(queryString ? `/track-plan?${queryString}` : "/track-plan");
+  redirect(queryString ? `/pay?${queryString}` : "/pay");
 }

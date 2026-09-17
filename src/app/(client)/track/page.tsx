@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default async function PlanStatusRedirect({
+export default async function TrackRedirect({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

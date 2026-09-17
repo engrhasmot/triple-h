@@ -95,8 +95,8 @@ export default function RootLayout({
               name: "TRIPLE H PLANDRAFT & ENGINEERING",
               alternateName: "Triple H Engineering",
               description: "Professional civil engineering consultancy in Bangladesh specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision.",
-              url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/images/logo.png`,
+              url: process.env.NEXT_PUBLIC_SITE_URL || "https://triple-h-engineering.vercel.app",
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://triple-h-engineering.vercel.app"}/images/logo.png`,
               email: "info@tripleh.com.bd",
               telephone: "+880-1778-506500",
               address: {

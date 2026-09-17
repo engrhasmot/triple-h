@@ -1,8 +1,9 @@
 import dbConnect from "@/lib/db";
 import Blog from "@/models/blog.model";
 import Project from "@/models/project.model";
+import { getSiteUrl } from "@/lib/constants";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://tripleh.com.bd";
+const BASE_URL = getSiteUrl();
 
 function xmlEscape(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

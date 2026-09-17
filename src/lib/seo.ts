@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getSiteUrl } from "./constants";
 
 interface SEOParams {
   title: string;
@@ -10,8 +11,8 @@ interface SEOParams {
 
 export function generateSEOMeta(params: SEOParams): Metadata {
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "TRIPLE H PLANDRAFT & ENGINEERING";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://tripleh.com.bd";
-  const url = params.path ? `${siteUrl}${params.path}` : siteUrl;
+  const siteUrl = getSiteUrl();
+  const url = params.path ? `${siteUrl}${params.path.startsWith('/') ? params.path : `/${params.path}`}` : siteUrl;
 
   return {
     title: `${params.title} | ${siteName}`,

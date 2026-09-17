@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -61,12 +61,15 @@ function buildWhatsAppMessage(p: Payment): string {
 ✅ পরিশোধিত: ৳${p.paidAmount.toLocaleString("en-BD")}
 ⏳ বকেয়া: ৳${p.dueAmount.toLocaleString("en-BD")}
 
-আপনার বকেয়া পেমেন্টটি সুবিধামতো সময়ে পরিশোধ করার অনুরোধ রইলো। যেকোনো সমস্যায় আমাদের সাথে যোগাযোগ করুন।
+💳 অনলাইনে পেমেন্ট করতে বা TrxID পাঠাতে ভিজিট করুন:
+👉 https://triple-h-engineering.vercel.app/pay
 
-ধন্যবাদ
+আপনার সুবিধামতো সময়ে পরিশোধ করার অনুরোধ রইলো। যেকোনো প্রয়োজনে আমাদের সাথে সরাসরি যোগাযোগ করুন।
+
+ধন্যবাদান্তে,
 ইঞ্জিনিয়ার মোঃ হাসমত আলী
 ট্রিপল এইচ পল্যান ড্রাফট ও ইঞ্জিনিয়ারিং
-📞 01XXXXXXXXX`;
+📞 01778-506500, 01631-186218`;
 }
 
 const FILTER_LABELS: { key: FilterKey; label: string }[] = [

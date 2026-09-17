@@ -13,6 +13,8 @@
  *   ADMIN_WHATSAPP_NUMBER   — Your WhatsApp number, e.g. +8801778506500
  */
 
+import { getSiteUrl } from './constants';
+
 export interface WhatsAppResult {
   success: boolean;
   message: string;
@@ -339,6 +341,7 @@ export function planStatusClientWhatsApp(data: {
     rejected: 'প্রত্যাখ্যাত ❌',
   };
   const statusLabel = statusLabels[data.newStatus] || data.newStatus;
+  const trackUrl = `${getSiteUrl()}/track-plan${data.fileId ? `?query=${encodeURIComponent(data.fileId)}` : ''}`;
   const lines = [
     `প্রিয় ${data.clientName},`,
     ``,
@@ -348,9 +351,11 @@ export function planStatusClientWhatsApp(data: {
   ];
   if (data.note) lines.push(`মন্তব্য: ${data.note}`);
   lines.push(``);
-  lines.push(`বিস্তারিত জানতে: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/track-plan`);
+  lines.push(`🔍 লাইভ স্ট্যাটাস দেখতে ক্লিক করুন:`);
+  lines.push(trackUrl);
   lines.push(``);
   lines.push(`ধন্যবাদ — *Triple H Plandraft & Engineering*`);
+  lines.push(`📞 01778-506500, 01631-186218`);
   return lines.join('\n');
 }
 
@@ -395,7 +400,7 @@ export function dailySummaryWhatsApp(data: {
     `• পেন্ডিং ওয়ার্ক অর্ডার: *${data.pendingWorkOrders}* টি`,
     ``,
     `🌐 ড্যাশবোর্ড সরাসরি দেখতে:`,
-    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/dashboard`,
+    `${getSiteUrl()}/admin/dashboard`,
     ``,
     `ধন্যবাদান্তে,`,
     `ইঞ্জিনিয়ার মোঃ হাসমত আলী (Managing Director)`,
@@ -418,7 +423,7 @@ export function newChatLeadWhatsApp(data: {
     ``,
     `⏰ সময়: ${nowBD()}`,
     ``,
-    `Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/inquiries`,
+    `Dashboard: ${getSiteUrl()}/admin/inquiries`,
     ``,
     `Triple H Plandraft & Engineering`,
   ].join('\n');
@@ -450,7 +455,8 @@ export function paymentReceiptWhatsApp(data: {
   if (data.note) lines.push(`📝 নোট: ${data.note}`);
   lines.push(``);
   lines.push(`তারিখ: ${nowBD()}`);
-  lines.push(`📞 যেকোনো তথ্যে: 01778-506500`);
+  lines.push(`📞 যেকোনো তথ্যে: 01778-506500, 01631-186218`);
+  lines.push(`🌐 সনদ ও রশিদ যাচাই: ${getSiteUrl()}/verify`);
   lines.push(``);
   lines.push(`ধন্যবাদ আমাদের সাথে থাকার জন্য! 🙏`);
   return lines.join('\n');
@@ -471,7 +477,7 @@ export function newReviewAdminWhatsApp(data: {
     `"${data.content}"`,
     ``,
     `⚠️ এটি বর্তমানে Pending আছে। অনুমোদন করতে ভিজিট করুন:`,
-    `🌐 ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/testimonials`,
+    `🌐 ${getSiteUrl()}/admin/testimonials`,
     ``,
     `Triple H Plandraft & Engineering`,
   ].join('\n');
@@ -502,7 +508,7 @@ export function newPaymentSubmissionWhatsApp(data: {
   lines.push(`⏰ সময়: ${nowBD()}`);
   lines.push(``);
   lines.push(`👉 যাচাই ও অনুমোদন করতে ভিজিট করুন:`);
-  lines.push(`🌐 ${process.env.NEXT_PUBLIC_SITE_URL || 'https://triple-h-engineering.vercel.app'}/admin/payments`);
+  lines.push(`🌐 ${getSiteUrl()}/admin/payments`);
   return lines.join('\n');
 }
 
@@ -547,7 +553,8 @@ export function inspectionReportWhatsApp(data: {
 
   lines.push(``);
   lines.push(`ইঞ্জিনিয়ার মোঃ হাসমত আলী (Managing Director)`);
-  lines.push(`📞 যেকোনো প্রয়োজনে: 01778-506500`);
+  lines.push(`📞 যেকোনো প্রয়োজনে: 01778-506500, 01631-186218`);
+  lines.push(`🌐 ওয়েবসাইট: ${getSiteUrl()}`);
 
   return lines.join('\n');
 }

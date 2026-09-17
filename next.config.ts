@@ -27,6 +27,35 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
+  async redirects() {
+    return [
+      {
+        source: "/track",
+        destination: "/track-plan",
+        permanent: true,
+      },
+      {
+        source: "/tracking",
+        destination: "/track-plan",
+        permanent: true,
+      },
+      {
+        source: "/plans",
+        destination: "/track-plan",
+        permanent: true,
+      },
+      {
+        source: "/payment",
+        destination: "/pay",
+        permanent: true,
+      },
+      {
+        source: "/payments",
+        destination: "/pay",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

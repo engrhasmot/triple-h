@@ -11,6 +11,8 @@
  *  Twilio: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
  */
 
+import { getSiteUrl } from './constants';
+
 export interface SMSResult {
   success: boolean;
   message: string;
@@ -139,7 +141,7 @@ export function planStatusUpdateSMS(data: {
   msg += `আপনার ফাইল "${data.projectTitle}" (ID: ${data.fileId}) এর অবস্থা আপডেট হয়েছে:\n\n`;
   msg += `নতুন অবস্থা: ${statusLabel}\n`;
   if (data.note) msg += `মন্তব্য: ${data.note}\n`;
-  msg += `\nবিস্তারিত জানতে: ${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/track-plan\n`;
+  msg += `\nবিস্তারিত জানতে: ${getSiteUrl()}/track-plan${data.fileId ? `?query=${encodeURIComponent(data.fileId)}` : ''}\n`;
   msg += `Triple H Plandraft & Engineering`;
 
   return msg;

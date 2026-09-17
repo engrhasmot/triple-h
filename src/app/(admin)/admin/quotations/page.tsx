@@ -181,7 +181,7 @@ export default function AdminQuotationsPage() {
       advancePaid > 0 ? `⏳ বর্তমান বকেয়া: *৳${dueAmount.toLocaleString()}*` : null,
       ``,
       `📞 যোগাযোগ: 01778-506500, 01631-186218`,
-      `🌐 www.tripleh.com.bd`,
+      `🌐 https://triple-h-engineering.vercel.app`,
     ]
       .filter(Boolean)
       .join("\n");

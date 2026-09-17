@@ -1,3 +1,11 @@
+export function getSiteUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.replace(/\/+$/, '');
+  }
+  return 'https://triple-h-engineering.vercel.app';
+}
+
 export const SITE_CONFIG = {
   name: 'TRIPLE H PLANDRAFT & ENGINEERING',
   shortName: 'Triple H',
@@ -5,11 +13,11 @@ export const SITE_CONFIG = {
   sloganEn: 'Planned Design, Safe Construction',
   description:
     'Professional civil engineering consultancy specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision in Bangladesh.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+  url: getSiteUrl(),
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8801778506500',
   facebook: 'https://www.facebook.com/profile.php?id=61592186641331',
-  email: 'info@triplehengineering.com',
-  phone: '+880-1XXX-XXXXXX',
+  email: 'info@tripleh.com.bd',
+  phone: '+880 1778-506500',
   address: 'Dhaka, Bangladesh',
 } as const;
 
