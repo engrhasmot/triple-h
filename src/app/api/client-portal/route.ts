@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import PlanStatus from "@/models/plan-status.model";
 import Payment from "@/models/payment.model";
+import Inspection from "@/models/inspection.model";
+import Agreement from "@/models/agreement.model";
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,26 +71,39 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // For each file, lookup matching payments
-    const projectsWithPayments = await Promise.all(
+    // For each file, lookup matching payments, inspections, and agreements
+    const projectsWithData = await Promise.all(
       files.map(async (file) => {
-        const filePayments = await Payment.find({
-          $or: [
-            { planFileRef: file.fileId },
-            { phone: file.phone },
-          ],
-        }).lean();
+        const [filePayments, fileInspections, fileAgreements] = await Promise.all([
+          Payment.find({
+            $or: [{ planFileRef: file.fileId }, { phone: file.phone }],
+          })
+            .sort({ createdAt: -1 })
+            .lean(),
+          Inspection.find({
+            $or: [{ clientPhone: file.phone }, { projectTitle: file.projectTitle }],
+          })
+            .sort({ inspectionDate: -1 })
+            .lean(),
+          Agreement.find({
+            $or: [{ clientPhone: file.phone }, { projectTitle: file.projectTitle }],
+          })
+            .sort({ createdAt: -1 })
+            .lean(),
+        ]);
 
         return {
           ...file,
           payments: filePayments,
+          inspections: fileInspections,
+          agreements: fileAgreements,
         };
       })
     );
 
     return NextResponse.json({
       success: true,
-      projects: projectsWithPayments,
+      projects: projectsWithData,
     });
   } catch (error: any) {
     console.error("Client Portal Error:", error);

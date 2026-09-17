@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, X, ZoomIn, MapPin, SlidersHorizontal } from "lucide-react";
+import { Loader2, X, ZoomIn, MapPin, SlidersHorizontal, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageSlider from "@/components/portfolio/ImageSlider";
 import dynamic from "next/dynamic";
 import SEOHead from "@/components/shared/SEOHead";
+import { SITE_CONFIG } from "@/lib/constants";
 
 const ProjectMap = dynamic(() => import("@/components/portfolio/ProjectMap"), { ssr: false, loading: () => <div className="h-[420px] bg-muted animate-pulse rounded-2xl" /> });
 
@@ -225,9 +226,18 @@ export default function PortfolioPage() {
                 </div>
 
                 <div className="pt-8">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 text-lg">
-                    Inquire About This Design
-                  </Button>
+                  <a
+                    href={`https://wa.me/${SITE_CONFIG.whatsapp}?text=${encodeURIComponent(
+                      `আসসালামুয়ালাইকুম ইঞ্জিনিয়ার মোঃ হাসমত আলী সাহেব, আমি আপনার ওয়েবসাইটের পোর্টফোলিওতে "${selectedProject.title}" (${selectedProject.category}) ডিজাইনটি দেখেছি। আমার জমিতে অনুরূপ ডিজাইন ও ড্রয়িং সংক্রান্ত পরামর্শ নিতে আগ্রহী।`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full block"
+                  >
+                    <Button className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold h-12 text-sm sm:text-base gap-2 shadow-lg">
+                      <MessageCircle className="w-5 h-5" /> এই ডিজাইনের ড্রয়িং নিয়ে কথা বলুন
+                    </Button>
+                  </a>
                 </div>
               </div>
 

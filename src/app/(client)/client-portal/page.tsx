@@ -18,7 +18,8 @@ import {
   AlertCircle,
   ExternalLink,
   Printer,
-  CreditCard
+  CreditCard,
+  ClipboardCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -166,6 +167,11 @@ export default function ClientPortalPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Link href={`/verify/${encodeURIComponent(project.fileId || "")}`} target="_blank">
+                        <Button size="sm" variant="outline" className="gap-1.5 text-xs font-bold border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> সনদ ভেরিফাই
+                        </Button>
+                      </Link>
                       <a
                         href={`https://wa.me/8801778506500?text=${encodeURIComponent(`Hello Triple H, I am checking my project ${project.projectTitle} (File: ${project.fileId})`)}`}
                         target="_blank"
@@ -257,6 +263,47 @@ export default function ClientPortalPage() {
                                 <Download className="w-3.5 h-3.5" /> ডাউনলোড
                               </Button>
                             </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Site Inspections & Quality Reports */}
+                  {project.inspections && project.inspections.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <ClipboardCheck className="w-4 h-4 text-emerald-600" /> সাইট পরিদর্শন ও কোয়ালিটি রিপোর্ট ({project.inspections.length} টি)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {project.inspections.map((insp: any, iIdx: number) => (
+                          <div key={iIdx} className="p-4 rounded-xl border bg-muted/20 space-y-2.5 text-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-primary text-primary-foreground font-mono font-bold text-[10px]">
+                                  {insp.reportNumber}
+                                </Badge>
+                                <span className="font-bold text-foreground">{insp.stage}</span>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] font-bold ${
+                                  insp.status === "satisfactory"
+                                    ? "text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/30"
+                                    : "text-amber-700 dark:text-amber-400 border-amber-500/30 bg-amber-50 dark:bg-amber-950/30"
+                                }`}
+                              >
+                                {insp.status === "satisfactory" ? "সন্তোষজনক ✅" : "সংশোধন প্রয়োজন ⚠️"}
+                              </Badge>
+                            </div>
+                            <div className="text-muted-foreground space-y-1 bg-card p-2.5 rounded-lg border border-border/50">
+                              <p><strong className="text-foreground">পর্যবেক্ষণ:</strong> {insp.observations}</p>
+                              <p><strong className="text-accent font-bold">মিস্ত্রির নির্দেশ:</strong> {insp.instructions}</p>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                              <span>তারিখ: {safeFormatDate(insp.inspectionDate)}</span>
+                              <span>ইন্সপেক্টর: {insp.inspectorName}</span>
+                            </div>
                           </div>
                         ))}
                       </div>

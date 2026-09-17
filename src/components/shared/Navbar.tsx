@@ -37,6 +37,7 @@ export default function Navbar() {
   ];
 
   const secondaryLinks = [
+    { name: "📐 নকশা পাঠান (Sketch)", href: "/sketch-upload" },
     { name: t("nav.clientPortal"), href: "/client-portal" },
     { name: t("nav.approvalGuide"), href: "/approval-guide" },
     { name: t("nav.payOnline"), href: "/pay" },
@@ -127,6 +128,11 @@ export default function Navbar() {
             </button>
 
             <div className="flex items-center gap-2 pl-3 border-l border-border ml-2">
+              <Link href="/sketch-upload">
+                <Button size="sm" variant="outline" className="font-bold border-accent/40 text-accent hover:bg-accent/10 hidden xl:flex text-xs h-9 gap-1.5">
+                  📐 নকশা পাঠান
+                </Button>
+              </Link>
               <Link href="/contact">
                 <Button className="font-bold bg-accent hover:bg-accent/90 text-primary-foreground hidden lg:flex">
                   <Phone className="w-4 h-4 mr-2" />
