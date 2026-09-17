@@ -1118,19 +1118,26 @@ export default function AdminPlanTrackerPage() {
           {selectedPlanForPrint && (
             <div className="p-6 bg-white text-black border rounded-xl space-y-6 font-sans">
               {/* Letterhead Header */}
-              <div className="border-b pb-4 flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-black tracking-tight text-emerald-800">
-                    TRIPLE H ENGINEERING CONSULTANCY
-                  </h2>
-                  <p className="text-xs text-gray-600 font-medium">
-                    Architectural, Structural Design, Soil Testing & Digital Land Survey
-                  </p>
-                  <p className="text-[11px] text-gray-500">
-                    Head Office: Dhaka, Bangladesh | Helpline: 01778-506500 | Web: triple-h-engineering.vercel.app
-                  </p>
+              <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start gap-4">
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src="/images/logo.png"
+                    alt="Triple H Logo"
+                    className="w-16 h-16 object-contain shrink-0"
+                  />
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight text-emerald-900">
+                      TRIPLE H PLANDRAFT &amp; ENGINEERING
+                    </h2>
+                    <p className="text-xs text-gray-700 font-medium">
+                      Architectural, Structural Design, Soil Testing &amp; Digital Land Survey
+                    </p>
+                    <p className="text-[11px] text-gray-500">
+                      Head Office: Savar Radio Colony, Dhaka | Helpline: 01778-506500 | Web: triple-h-engineering.vercel.app
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <span className="font-mono text-sm font-bold bg-gray-100 px-3 py-1 rounded border border-gray-300">
                     {selectedPlanForPrint.fileId}
                   </span>
@@ -1223,7 +1230,7 @@ export default function AdminPlanTrackerPage() {
                   <div className="w-52 border-t border-gray-400 pt-1">
                     <p className="font-bold text-gray-900">ইঞ্জিনিয়ার মোঃ হাসমত আলী</p>
                     <p className="text-[10px] text-emerald-800 font-semibold">প্রতিষ্ঠাতা ও প্রধান পরামর্শক</p>
-                    <p className="text-[10px] text-gray-600">ট্রিপল এইচ ইঞ্জিনিয়ারিং কনসালটেন্সি</p>
+                    <p className="text-[10px] text-gray-600">ট্রিপল এইচ প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং</p>
                   </div>
                 </div>
               </div>

@@ -598,7 +598,7 @@ export default function AdminQuotationsPage() {
               Engr. Hasmot Ali
             </div>
             <p className="text-[11px] font-medium text-slate-600">Chief Consultant, Member IEB</p>
-            <p className="text-[10px] text-slate-400">Triple H Engineering Consultancy</p>
+            <p className="text-[10px] text-slate-400">Triple H Plandraft &amp; Engineering</p>
           </div>
         </div>
       </div>

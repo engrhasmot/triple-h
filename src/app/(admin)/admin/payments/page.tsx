@@ -721,17 +721,17 @@ export default function PaymentsPage() {
                 {/* Header with Logo */}
                 <div className="flex items-center justify-between border-b pb-4 border-slate-200">
                   <div className="flex items-center gap-3">
-                    <img src="/logo.png" alt="Triple H Logo" className="w-14 h-14 object-contain" />
+                    <img src="/images/logo.png" alt="Triple H Logo" className="w-14 h-14 object-contain" />
                     <div>
-                      <h2 className="text-xl font-black text-slate-900 tracking-tight">TRIPLE H</h2>
-                      <p className="text-xs font-semibold text-accent tracking-wider uppercase">Engineering Consultancy</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Civil Engineering · Architecture · RAJUK & City Plan Passing</p>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Triple H Plandraft &amp; Engineering</h2>
+                      <p className="text-xs font-semibold text-accent tracking-wider uppercase">Plandraft &amp; Engineering Consultancy</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Civil Engineering · Architecture · RAJUK &amp; City Plan Passing</p>
                     </div>
                   </div>
                   <div className="text-right text-xs text-slate-600 space-y-0.5">
-                    <p className="font-semibold text-slate-800">Hotline: +880 1711-285651</p>
-                    <p>contact@tripleh.com</p>
-                    <p>Dhaka, Bangladesh</p>
+                    <p className="font-semibold text-slate-800">Helpline: +880 1778-506500</p>
+                    <p>info@tripleh.com.bd</p>
+                    <p>Savar Radio Colony, Dhaka</p>
                   </div>
                 </div>
 
@@ -849,7 +849,7 @@ export default function PaymentsPage() {
                   <div>
                     <div className="border-t border-slate-400 w-36 mx-auto mb-1"></div>
                     <p className="font-bold text-slate-700">Authorized Signature</p>
-                    <p className="text-[10px] text-slate-500">Triple H Engineering Consultancy</p>
+                    <p className="text-[10px] text-slate-500">Triple H Plandraft &amp; Engineering</p>
                   </div>
                 </div>
               </div>

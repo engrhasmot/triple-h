@@ -637,14 +637,19 @@ export default function CastingQCPage() {
           {selectedRecord && (
             <div className="border-4 border-double border-amber-600/60 p-8 rounded-xl bg-card text-foreground space-y-6 print:border-black print:p-4">
               <div className="text-center space-y-1 border-b border-border pb-4">
+                <div className="flex justify-center mb-1">
+                  <div className="w-12 h-12 bg-white rounded-xl border border-border/60 p-1 flex items-center justify-center">
+                    <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
+                  </div>
+                </div>
                 <div className="text-xs font-bold tracking-widest text-amber-700 dark:text-amber-400 uppercase">
-                  Triple H Plandraft & Engineering Consultancy
+                  Triple H Plandraft &amp; Engineering
                 </div>
                 <h2 className="text-xl font-black uppercase tracking-wider">
                   CONCRETE STRENGTH QUALITY CERTIFICATE
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Official Quality Control & Structural Compliance Verification
+                  Official Quality Control &amp; Structural Compliance Verification
                 </p>
               </div>
 

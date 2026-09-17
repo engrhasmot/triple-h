@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     // 3. Dispatch WhatsApp alert to Engr. Hasmot Ali (+880 1778-506500)
     const adminMsg = [
       `📐 *নতুন জমির খসড়া স্কেচ ও প্ল্যান রিকোয়েস্ট!*`,
-      `Triple H Engineering Consultancy`,
+      `Triple H Plandraft & Engineering`,
       ``,
       `👤 নাম: *${name}*`,
       `📞 ফোন: *${phone}*`,

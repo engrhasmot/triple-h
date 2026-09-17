@@ -322,22 +322,22 @@ export default function AdminSettingsPage() {
               <div className="flex items-start gap-2.5">
                 <Globe className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground">Triple H Engineering Consultancy</p>
-                  <p className="text-muted-foreground">Civil, Architecture & RAJUK Approval</p>
+                  <p className="font-semibold text-foreground">Triple H Plandraft &amp; Engineering</p>
+                  <p className="text-muted-foreground">Architectural, Structural Design &amp; Plan Passing</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground">WhatsApp & Hotline</p>
-                  <p className="text-muted-foreground font-mono">+880 1711-285651</p>
+                  <p className="font-semibold text-foreground">WhatsApp &amp; Helpline</p>
+                  <p className="text-muted-foreground font-mono">+880 1778-506500 | 01631-186218</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground">Official Email</p>
-                  <p className="text-muted-foreground font-mono">contact@tripleh.com</p>
+                  <p className="text-muted-foreground font-mono">info@tripleh.com.bd</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">

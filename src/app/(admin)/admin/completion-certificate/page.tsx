@@ -253,12 +253,12 @@ export default function CompletionCertificatePage() {
             {/* Corner Badges */}
             <div className="text-center space-y-2 border-b-2 border-amber-500/40 pb-6">
               <div className="flex justify-center mb-2">
-                <div className="p-3 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-600 dark:text-amber-400">
-                  <ShieldCheck className="w-10 h-10" />
+                <div className="w-16 h-16 bg-white rounded-2xl border-2 border-amber-500/40 p-2 shadow-sm flex items-center justify-center">
+                  <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
                 </div>
               </div>
               <div className="text-xs tracking-widest font-black uppercase text-amber-700 dark:text-amber-400">
-                TRIPLE H PLANDRAFT & ENGINEERING CONSULTANCY
+                TRIPLE H PLANDRAFT &amp; ENGINEERING
               </div>
               <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-foreground font-serif">
                 CERTIFICATE OF STRUCTURAL SAFETY

@@ -585,9 +585,14 @@ export default function SiteHaziraPage() {
 
             {/* Print Voucher Sheet */}
             <div className="border border-border p-6 rounded-lg bg-card text-foreground space-y-4 print:border-black print:p-2">
-              <div className="text-center border-b border-border pb-3">
+              <div className="text-center border-b border-border pb-3 space-y-1">
+                <div className="flex justify-center mb-1">
+                  <div className="w-10 h-10 bg-white rounded-lg border border-border/60 p-1 flex items-center justify-center">
+                    <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
+                  </div>
+                </div>
                 <h2 className="font-black text-sm uppercase tracking-wider">RUNNING ACCOUNT BILL (R.A. BILL)</h2>
-                <div className="text-[11px] text-muted-foreground">Triple H Plandraft & Engineering Consultancy</div>
+                <div className="text-[11px] text-muted-foreground font-semibold">Triple H Plandraft &amp; Engineering</div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px]">

@@ -29,7 +29,7 @@ export async function GET(
         status: plan.currentStatus,
         certifiedBy: "Engr. Hasmot Ali",
         designation: "Chief Structural Consultant, Member IEB",
-        authority: "Triple H Engineering Consultancy (RAJUK & Pourashava Enlisted)",
+        authority: "Triple H Plandraft & Engineering (RAJUK & Pourashava Enlisted)",
       });
     }
 
@@ -56,7 +56,7 @@ export async function GET(
         status: payment.status,
         certifiedBy: "Triple H Accounts & Engineering Authority",
         designation: "Authorized Signatory",
-        authority: "Triple H Engineering Consultancy",
+        authority: "Triple H Plandraft & Engineering",
       });
     }
 
@@ -72,8 +72,8 @@ export async function GET(
       status: "AUTHENTICATED",
       certifiedBy: "Engr. Hasmot Ali",
       designation: "Chief Consultant, Member IEB",
-      authority: "Triple H Engineering Consultancy",
-      note: "This document is an authentic electronic record issued by Triple H Engineering Consultancy."
+      authority: "Triple H Plandraft & Engineering",
+      note: "This document is an authentic electronic record issued by Triple H Plandraft & Engineering."
     });
   } catch (error: any) {
     console.error("Verification Error:", error);

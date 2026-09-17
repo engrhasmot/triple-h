@@ -380,7 +380,7 @@ export function dailySummaryWhatsApp(data: {
 
   const lines = [
     `📊 *ট্রিপল এইচ — দৈনিক কার্যবিবরণী (Daily Report)*`,
-    `🏢 *Triple H Engineering Consultancy*`,
+    `🏢 *Triple H Plandraft & Engineering*`,
     `📞 প্রেরক (Office): ${sender}`,
     `📱 প্রাপক (Target): ${recipient}`,
     `📅 তারিখ: ${data.date}`,
@@ -495,7 +495,7 @@ export function newPaymentSubmissionWhatsApp(data: {
 }): string {
   const lines = [
     `🔔 *নতুন অনলাইন পেমেন্ট সাবমিশন!*`,
-    `Triple H Engineering Consultancy`,
+    `Triple H Plandraft & Engineering`,
     ``,
     `👤 ক্লায়েন্ট: *${data.clientName}*`,
     `📞 ফোন: ${data.phone}`,

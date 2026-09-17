@@ -498,15 +498,20 @@ export default function SoilTestPage() {
 
           {selectedRecord && (
             <div className="border border-border p-6 rounded-lg bg-card text-foreground space-y-4 print:border-black print:p-2 text-xs">
-              <div className="text-center border-b border-border pb-3">
+              <div className="text-center border-b border-border pb-3 space-y-1">
+                <div className="flex justify-center mb-1">
+                  <div className="w-12 h-12 bg-white rounded-xl border border-border/60 p-1 flex items-center justify-center">
+                    <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
+                  </div>
+                </div>
                 <div className="text-[11px] font-bold tracking-widest text-primary uppercase">
-                  Triple H Plandraft & Engineering Consultancy
+                  Triple H Plandraft &amp; Engineering
                 </div>
                 <h2 className="text-base font-black uppercase tracking-wider">
                   GEOTECHNICAL SOIL INVESTIGATION REPORT
                 </h2>
                 <div className="text-[11px] text-muted-foreground">
-                  Sub-soil Profile & Bearing Capacity Analysis (BNBC Standard)
+                  Sub-soil Profile &amp; Bearing Capacity Analysis (BNBC Standard)
                 </div>
               </div>
 
@@ -580,7 +585,7 @@ export default function SoilTestPage() {
                   <div className="font-bold text-foreground">Engr. Md. Hasmot Ali</div>
                   <div className="text-muted-foreground text-[10px]">Founder & Chief Consultant</div>
                   <div className="w-32 border-b border-border mt-3 mb-1 ml-auto" />
-                  <div className="text-[10px] text-muted-foreground">Triple H Engineering Consultancy</div>
+                  <div className="text-[10px] text-muted-foreground">Triple H Plandraft &amp; Engineering</div>
                 </div>
               </div>
             </div>
