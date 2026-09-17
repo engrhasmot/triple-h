@@ -39,6 +39,7 @@ export default function Navbar() {
   const secondaryLinks = [
     { name: "📐 নকশা পাঠান (Sketch)", href: "/sketch-upload" },
     { name: t("nav.clientPortal"), href: "/client-portal" },
+    { name: "📢 নোটিশ বোর্ড (Notices)", href: "/notices" },
     { name: t("nav.approvalGuide"), href: "/approval-guide" },
     { name: t("nav.payOnline"), href: "/pay" },
     { name: t("nav.costEstimator"), href: "/cost-estimator" },

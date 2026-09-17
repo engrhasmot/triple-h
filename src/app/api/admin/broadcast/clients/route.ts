@@ -3,6 +3,8 @@ import dbConnect from "@/lib/db";
 import Payment from "@/models/payment.model";
 import WorkOrder from "@/models/work-order.model";
 import Inquiry from "@/models/inquiry.model";
+import PlanStatus from "@/models/plan-status.model";
+import ClientUser from "@/models/client-user.model";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 
@@ -24,8 +26,10 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
 
-    // Fetch from Payment, WorkOrder, Inquiry
-    const [payments, workOrders, inquiries] = await Promise.all([
+    // Fetch from ClientUser, PlanStatus, Payment, WorkOrder, Inquiry
+    const [clientUsers, planFiles, payments, workOrders, inquiries] = await Promise.all([
+      ClientUser.find({}, "name phone address linkedFiles").lean(),
+      PlanStatus.find({}, "clientName phone projectTitle currentStatus").lean(),
       Payment.find({}, "clientName phone projectTitle status dueAmount").lean(),
       WorkOrder.find({}, "name phone projectTitle status").lean(),
       Inquiry.find({}, "name phone serviceType status").lean(),
@@ -40,6 +44,38 @@ export async function GET(req: NextRequest) {
       status?: string;
       hasDue?: boolean;
     }>();
+
+    for (const u of clientUsers) {
+      if (u.phone) {
+        const cleanPhone = u.phone.trim().replace(/[^\d+]/g, "");
+        if (cleanPhone.length >= 10 && !clientMap.has(cleanPhone)) {
+          clientMap.set(cleanPhone, {
+            name: u.name || "সম্মানিত ক্লায়েন্ট",
+            phone: cleanPhone,
+            projectTitle: u.linkedFiles?.length > 0 ? `File: ${u.linkedFiles.join(", ")}` : "Portal Client",
+            source: "Registered Client",
+            status: "active",
+            hasDue: false,
+          });
+        }
+      }
+    }
+
+    for (const pl of planFiles) {
+      if (pl.phone) {
+        const cleanPhone = pl.phone.trim().replace(/[^\d+]/g, "");
+        if (cleanPhone.length >= 10 && !clientMap.has(cleanPhone)) {
+          clientMap.set(cleanPhone, {
+            name: pl.clientName || "সম্মানিত ক্লায়েন্ট",
+            phone: cleanPhone,
+            projectTitle: pl.projectTitle,
+            source: "Plan Tracker",
+            status: pl.currentStatus,
+            hasDue: false,
+          });
+        }
+      }
+    }
 
     for (const p of payments) {
       if (p.phone) {

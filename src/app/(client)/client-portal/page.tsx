@@ -32,6 +32,11 @@ import {
   Calendar,
   Sparkles,
   ExternalLink,
+  Bell,
+  Pin,
+  Megaphone,
+  Flame,
+  Share2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,8 +73,9 @@ export default function ClientPortalPage() {
     initialQuery ? "search" : "login"
   );
   const [portalTab, setPortalTab] = useState<
-    "projects" | "payments" | "inspections" | "agreements" | "support" | "profile"
+    "projects" | "payments" | "inspections" | "agreements" | "support" | "profile" | "notices"
   >("projects");
+  const [clientNotices, setClientNotices] = useState<any[]>([]);
 
   // Login Form
   const [loginPhone, setLoginPhone] = useState("");
@@ -163,8 +169,21 @@ export default function ClientPortalPage() {
     }
   };
 
+  const fetchNotices = async () => {
+    try {
+      const res = await fetch("/api/notices");
+      const data = await res.json();
+      if (res.ok && data.notices) {
+        setClientNotices(data.notices);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     checkAuth();
+    fetchNotices();
   }, []);
 
   // Handle Quick Search for guest
@@ -505,6 +524,16 @@ export default function ClientPortalPage() {
               }`}
             >
               <HelpCircle className="w-4 h-4" /> সাইট ভিজিট ও সাপোর্ট
+            </button>
+            <button
+              onClick={() => setPortalTab("notices")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
+                portalTab === "notices"
+                  ? "bg-accent text-white shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Bell className="w-4 h-4" /> নোটিশ বোর্ড ({clientNotices.length})
             </button>
             <button
               onClick={() => setPortalTab("profile")}
@@ -1115,6 +1144,95 @@ export default function ClientPortalPage() {
                 </form>
               </CardContent>
             </Card>
+          )}
+
+          {/* TAB 7: NOTICES & ANNOUNCEMENTS */}
+          {portalTab === "notices" && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-2xl border shadow-xs">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-accent" /> অফিসিয়াল নোটিশ ও কারিগরি নির্দেশনা
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    ট্রিপল এইচ কনসালটেন্সির অফিসিয়াল বিজ্ঞপ্তি, সাইট কাজের সতর্কতা এবং ছুটির শিডিউল।
+                  </p>
+                </div>
+                <Link href="/notices" target="_blank">
+                  <Button size="sm" variant="outline" className="text-xs gap-1.5 font-bold">
+                    <ExternalLink className="w-3.5 h-3.5" /> পাবলিক নোটিশ বোর্ড
+                  </Button>
+                </Link>
+              </div>
+
+              {clientNotices.length === 0 ? (
+                <Card className="text-center py-12 border-dashed">
+                  <CardContent className="space-y-3">
+                    <Bell className="w-12 h-12 text-muted-foreground/60 mx-auto" />
+                    <h3 className="text-lg font-bold">বর্তমানে কোনো সক্রিয় নোটিশ নেই</h3>
+                    <p className="text-xs text-muted-foreground">
+                      নতুন কোনো সরকারি বা প্রাতিষ্ঠানিক নোটিশ প্রকাশিত হলে এখানে দেখতে পাবেন।
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                clientNotices.map((notice, nIdx) => (
+                  <Card
+                    key={nIdx}
+                    className={`border-2 transition-all shadow-xs ${
+                      notice.isPinned ? "border-accent/40 bg-accent/5" : ""
+                    }`}
+                  >
+                    <CardContent className="p-5 space-y-3 text-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b pb-3">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {notice.isPinned && (
+                              <Badge className="bg-accent text-white font-bold text-[10px] gap-1">
+                                <Pin className="w-3 h-3" /> Pinned
+                              </Badge>
+                            )}
+                            {notice.priority === "urgent" && (
+                              <Badge className="bg-rose-600 text-white font-bold text-[10px] gap-1">
+                                <Flame className="w-3 h-3" /> জরুরি নোটিশ
+                              </Badge>
+                            )}
+                            {notice.priority === "important" && (
+                              <Badge className="bg-amber-600 text-white font-bold text-[10px] gap-1">
+                                গুরুত্বপূর্ণ
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-[10px] capitalize font-semibold">
+                              {notice.category?.replace("_", " ")}
+                            </Badge>
+                          </div>
+                          <h4 className="text-base font-bold text-foreground pt-1">{notice.title}</h4>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          {safeFormatDate(notice.publishedAt || notice.createdAt)}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed bg-muted/30 p-3 rounded-xl border border-border/50">
+                        {notice.content}
+                      </p>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground pt-1">
+                        <span>প্রকাশক: <strong className="text-foreground">{notice.author}</strong></span>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(`📢 *${notice.title}*\n\n${notice.content}\n\n- ${notice.author}\nট্রিপল এইচ ইঞ্জিনিয়ারিং\nhttps://triple-h-engineering.vercel.app/client-portal`)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-600 font-bold hover:underline"
+                        >
+                          <Share2 className="w-3.5 h-3.5" /> হোয়াটসঅ্যাপে শেয়ার
+                        </a>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           )}
 
           {/* Printable Official Cash Memo / Money Receipt Modal */}

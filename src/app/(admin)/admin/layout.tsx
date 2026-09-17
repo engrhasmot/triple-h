@@ -42,6 +42,7 @@ const allNavItems = [
   { href: "/admin/pile-calculator", label: "Pile Calculator", icon: Ruler },
   { href: "/admin/soil-test", label: "Soil Test", icon: Layers },
   { href: "/admin/completion-certificate", label: "Certificates", icon: Award },
+  { href: "/admin/notices", label: "Notice Board", icon: BellRing },
   { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
   { href: "/admin/bid-analyzer", label: "Bid Analyzer", icon: Scale },
 ];
@@ -69,6 +70,7 @@ const allowedHrefsByRole: Record<string, string[]> = {
     "/admin/pile-calculator",
     "/admin/soil-test",
     "/admin/completion-certificate",
+    "/admin/notices",
     "/admin/broadcast",
     "/admin/bid-analyzer",
   ],
