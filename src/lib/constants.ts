@@ -1,9 +1,23 @@
+export const CANONICAL_SITE_URL = 'https://triple-h-engineering.vercel.app';
+
 export function getSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return envUrl.replace(/\/+$/, '');
+    try {
+      const urlToParse = envUrl.startsWith('http://') || envUrl.startsWith('https://')
+        ? envUrl
+        : `https://${envUrl}`;
+      const parsed = new URL(urlToParse);
+      // Strictly extract the origin (e.g. 'https://triple-h-engineering.vercel.app')
+      // and strip any trailing paths like '/services' or accidental sub-paths
+      if (parsed.hostname && parsed.hostname.includes('.')) {
+        return parsed.origin;
+      }
+    } catch {
+      // fallback if URL parsing fails
+    }
   }
-  return 'https://triple-h-engineering.vercel.app';
+  return CANONICAL_SITE_URL;
 }
 
 export const SITE_CONFIG = {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Montserrat, Hind_Siliguri } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
+import { getSiteUrl } from "@/lib/constants";
 import "./globals.css";
 
 // Body font
@@ -95,8 +96,8 @@ export default function RootLayout({
               name: "TRIPLE H PLANDRAFT & ENGINEERING",
               alternateName: "Triple H Engineering",
               description: "Professional civil engineering consultancy in Bangladesh specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision.",
-              url: process.env.NEXT_PUBLIC_SITE_URL || "https://triple-h-engineering.vercel.app",
-              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://triple-h-engineering.vercel.app"}/images/logo.png`,
+              url: getSiteUrl(),
+              logo: `${getSiteUrl()}/images/logo.png`,
               email: "info@tripleh.com.bd",
               telephone: "+880-1778-506500",
               address: {

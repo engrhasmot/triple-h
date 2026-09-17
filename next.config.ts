@@ -30,6 +30,26 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/services/admin/:path*",
+        destination: "/admin/:path*",
+        permanent: true,
+      },
+      {
+        source: "/services/track-plan",
+        destination: "/track-plan",
+        permanent: true,
+      },
+      {
+        source: "/services/pay",
+        destination: "/pay",
+        permanent: true,
+      },
+      {
+        source: "/services/client-portal",
+        destination: "/client-portal",
+        permanent: true,
+      },
+      {
         source: "/track",
         destination: "/track-plan",
         permanent: true,
