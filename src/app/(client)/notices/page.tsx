@@ -82,14 +82,19 @@ export default function PublicNoticesPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-3">
+          <div className="flex justify-center mb-2">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-border/80 shadow-md p-2 flex items-center justify-center">
+              <img src="/images/logo.png" alt="Triple H Logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
           <Badge variant="outline" className="px-3 py-1 bg-accent/10 text-accent border-accent/20 text-xs font-semibold">
-            <Bell className="w-3.5 h-3.5 mr-1" /> Triple H Official Circulars & Advisories
+            <Bell className="w-3.5 h-3.5 mr-1" /> Triple H Plandraft &amp; Engineering — Official Circulars
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
             অফিসিয়াল নোটিশ বোর্ড ও কারিগরি নির্দেশনা
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto">
-            ট্রিপল এইচ ইঞ্জিনিয়ারিং কনসালটেন্সির অফিস বন্ধ ও ছুটির তালিকা, রাজউক ও পৌরসভা প্ল্যান অনুমোদনের নিয়মাবলী এবং ভবন নির্মাণ সাইট সতর্কতা।
+            ট্রিপল এইচ প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং কনসালটেন্সির অফিস বন্ধ ও ছুটির তালিকা, রাজউক ও পৌরসভা প্ল্যান অনুমোদনের নিয়মাবলী এবং ভবন নির্মাণ সাইট সতর্কতা।
           </p>
         </div>
 

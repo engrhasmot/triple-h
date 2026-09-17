@@ -21,8 +21,10 @@ export function getSiteUrl(): string {
 }
 
 export const SITE_CONFIG = {
-  name: 'TRIPLE H PLANDRAFT & ENGINEERING',
-  shortName: 'Triple H',
+  name: 'Triple H Plandraft & Engineering',
+  shortName: 'Triple H Plandraft & Engineering',
+  fullName: 'Triple H Plandraft & Engineering',
+  nameBn: 'ট্রিপল এইচ প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং',
   slogan: 'পরিকল্পিত নকশা, নিরাপদ নির্মাণ',
   sloganEn: 'Planned Design, Safe Construction',
   description:

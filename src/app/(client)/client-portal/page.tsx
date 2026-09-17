@@ -401,8 +401,8 @@ export default function ClientPortalPage() {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-accent/10 border-2 border-accent/30 flex items-center justify-center text-accent shrink-0">
-                    <User className="w-7 h-7" />
+                  <div className="w-14 h-14 rounded-2xl bg-white border-2 border-accent/30 flex items-center justify-center p-1.5 shrink-0 shadow-xs">
+                    <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -410,7 +410,7 @@ export default function ClientPortalPage() {
                         স্বাগতম, {clientUser.name}
                       </h1>
                       <Badge className="bg-accent/15 text-accent border-accent/30 text-[11px] font-bold gap-1">
-                        <Sparkles className="w-3 h-3" /> VIP Client Portal
+                        <Sparkles className="w-3 h-3" /> Triple H VIP Client Portal
                       </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
@@ -1243,15 +1243,15 @@ export default function ClientPortalPage() {
                   <div className="border border-slate-300 rounded-xl p-6 bg-white shadow-sm space-y-6">
                     <div className="flex items-center justify-between border-b pb-4 border-slate-200">
                       <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="Triple H Logo" className="w-12 h-12 object-contain" />
+                        <img src="/images/logo.png" alt="Triple H Logo" className="w-12 h-12 object-contain" />
                         <div>
-                          <h2 className="text-xl font-black text-slate-900">TRIPLE H</h2>
-                          <p className="text-xs font-semibold text-accent uppercase">Engineering Consultancy</p>
+                          <h2 className="text-xl font-black text-slate-900">Triple H Plandraft &amp; Engineering</h2>
+                          <p className="text-xs font-semibold text-accent uppercase">Plandraft &amp; Engineering Consultancy</p>
                         </div>
                       </div>
                       <div className="text-right text-xs text-slate-600">
                         <p className="font-semibold">+880 1778-506500</p>
-                        <p>Dhanmondi, Dhaka</p>
+                        <p>Savar Radio Colony, Dhaka</p>
                       </div>
                     </div>
 
@@ -1316,8 +1316,13 @@ export default function ClientPortalPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
+          <div className="flex justify-center mb-2">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-border/80 shadow-md p-2 flex items-center justify-center">
+              <img src="/images/logo.png" alt="Triple H Logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
           <Badge variant="outline" className="px-3 py-1 bg-accent/10 text-accent border-accent/20 text-xs font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Triple H Client Self-Service Portal
+            <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Triple H Plandraft &amp; Engineering — Client Portal
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
             ক্লায়েন্ট সেলফ-সার্ভিস ও প্রজেক্ট ট্র্যাকার

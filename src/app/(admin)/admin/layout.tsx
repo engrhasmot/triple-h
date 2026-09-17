@@ -144,15 +144,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="p-6 border-b border-border mt-12 md:mt-0">
+        <div className="p-4 border-b border-border mt-12 md:mt-0 flex items-center gap-3">
           <Image
             src="/images/logo.png"
-            alt="TRIPLE H PLANDRAFT & ENGINEERING"
-            width={120}
-            height={120}
-            className="h-10 w-auto object-contain"
+            alt="Triple H Plandraft & Engineering"
+            width={44}
+            height={44}
+            className="h-10 w-10 object-contain shrink-0"
           />
-          <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-semibold">Admin Portal</p>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-black tracking-tight text-foreground leading-tight truncate">
+              Triple H Plandraft &amp; Engineering
+            </span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+              Admin Portal
+            </span>
+          </div>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">

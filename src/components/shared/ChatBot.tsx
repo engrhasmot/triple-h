@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Loader2, Bot, User, Phone, RotateCcw, Sparkles } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/constants";
@@ -23,7 +24,7 @@ const SUGGESTED_QUESTIONS = [
 
 const WELCOME_MESSAGE: Message = {
   role: "bot",
-  content: `আস্সালামু আলাইকুম! 👋 **Triple H Engineering**-এ স্বাগতম!\n\nআমি আপনার AI-powered Engineering Assistant। আমি বুঝতে পারি আপনার প্রশ্নের অর্থ এবং সেরে উত্তর দিই!\n\n🏗️ আমি এই বিষয়ে সাহায্য করতে পারি:\n- 💰 নির্মাণ খরচ ও বাজেট\n- 📐 2D/3D Design ও নকশা\n- 📋 রাজউক প্ল্যান পাসিং\n- 🏗️ সাইট সুপারভিশন\n- 📞 যোগাযোগ ও অ্যাপয়েন্টমেন্ট\n\nআপনার প্রশ্ন লিখুন অথবা নিচে থেকে বাছাই করুন!`,
+  content: `আস্সালামু আলাইকুম! 👋 **Triple H Plandraft & Engineering**-এ স্বাগতম!\n\nআমি আপনার AI-powered Engineering Assistant। আমি বুঝতে পারি আপনার প্রশ্নের অর্থ এবং সেরে উত্তর দিই!\n\n🏗️ আমি এই বিষয়ে সাহায্য করতে পারি:\n- 💰 নির্মাণ খরচ ও বাজেট\n- 📐 2D/3D Design ও নকশা\n- 📋 রাজউক প্ল্যান পাসিং\n- 🏗️ সাইট সুপারভিশন\n- 📞 যোগাযোগ ও অ্যাপয়েন্টমেন্ট\n\nআপনার প্রশ্ন লিখুন অথবা নিচে থেকে বাছাই করুন!`,
   time: new Date().toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }),
   followUps: ["নির্মাণ খরচ কত?", "2D Plan সম্পর্কে বলুন", "Appointment বুক করব", "আপনি কে?"],
 };
@@ -181,18 +182,24 @@ export default function ChatBot() {
           >
             {/* Header */}
             <div className="bg-primary px-4 py-3 flex items-center gap-3 shrink-0">
-              <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center shrink-0 relative">
-                <Bot className="w-5 h-5 text-primary" />
+              <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shrink-0 relative p-1 overflow-hidden shadow-sm border border-white/40">
+                <Image
+                  src="/images/logo.png"
+                  alt="Triple H"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-primary-foreground text-sm leading-tight flex items-center gap-1.5">
-                  Triple H Assistant
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                <p className="font-bold text-primary-foreground text-sm leading-tight flex items-center gap-1.5 truncate">
+                  Triple H Plandraft &amp; Engineering
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
                 </p>
                 <p className="text-xs text-primary-foreground/70 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block animate-pulse" />
-                  AI-Powered · সবসময় অনলাইন
+                  AI Assistant · সবসময় অনলাইন
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -222,11 +229,11 @@ export default function ChatBot() {
                   transition={{ duration: 0.2 }}
                   className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                    msg.role === "bot" ? "bg-primary/10" : "bg-accent/10"
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${
+                    msg.role === "bot" ? "bg-white border border-border p-0.5" : "bg-accent/10"
                   }`}>
                     {msg.role === "bot"
-                      ? <Bot className="w-4 h-4 text-primary" />
+                      ? <Image src="/images/logo.png" alt="Triple H" width={22} height={22} className="w-full h-full object-contain" />
                       : <User className="w-4 h-4 text-accent" />
                     }
                   </div>
@@ -256,8 +263,8 @@ export default function ChatBot() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex gap-2"
                 >
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-primary" />
+                  <div className="w-7 h-7 rounded-full bg-white border border-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                    <Image src="/images/logo.png" alt="Triple H" width={20} height={20} className="w-full h-full object-contain" />
                   </div>
                   <div className="bg-secondary px-4 py-3 rounded-2xl rounded-tl-sm">
                     <div className="flex items-center gap-2">

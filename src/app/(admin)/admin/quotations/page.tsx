@@ -589,7 +589,7 @@ export default function AdminQuotationsPage() {
                 <p className="font-mono text-blue-900 font-semibold mt-0.5">{docNumber}</p>
               </div>
             </div>
-            <p className="font-semibold text-slate-800">Thank you for choosing Triple H!</p>
+            <p className="font-semibold text-slate-800">Thank you for choosing Triple H Plandraft &amp; Engineering!</p>
             <p className="text-[11px]">This is an authenticated computer-generated official document.</p>
           </div>
 

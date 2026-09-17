@@ -267,8 +267,13 @@ export default function ApprovalGuidePage() {
       <section className="relative bg-gradient-to-b from-primary/10 via-background to-background pt-12 pb-10 border-b border-border/60">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center space-y-3">
+            <div className="flex justify-center mb-1">
+              <div className="w-14 h-14 rounded-2xl bg-white border border-border/80 shadow-xs p-1.5 flex items-center justify-center">
+                <img src="/images/logo.png" alt="Triple H Logo" className="w-full h-full object-contain" />
+              </div>
+            </div>
             <Badge variant="outline" className="px-3 py-1 text-xs font-semibold bg-primary/10 text-primary border-primary/20">
-              <Building className="w-3.5 h-3.5 mr-1.5 inline" /> অফিসিয়াল অনুমোদন চেকলিস্ট
+              <Building className="w-3.5 h-3.5 mr-1.5 inline" /> Triple H Plandraft &amp; Engineering — অফিসিয়াল অনুমোদন গাইড
             </Badge>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
               রাজউক ও পৌরসভা বিল্ডিং প্ল্যান অনুমোদন গাইড
@@ -453,7 +458,7 @@ export default function ApprovalGuidePage() {
             কোনো ড্রয়িং, সয়েল টেস্ট বা ছাড়পত্র নিয়ে ভাবছেন?
           </h3>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
-            ট্রিপল এইচ কনসালটেন্সির অভিজ্ঞ স্ট্রাকচারাল ইঞ্জিনিয়ার ও রাজউক সনদপ্রাপ্ত আর্কিটেক্টদের মাধ্যমে সম্পূর্ণ প্ল্যান প্রস্তুত ও অনুমোদনের পূর্ণ সহায়তা নিন।
+            ট্রিপল এইচ প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং কনসালটেন্সির অভিজ্ঞ স্ট্রাকচারাল ইঞ্জিনিয়ার ও রাজউক সনদপ্রাপ্ত আর্কিটেক্টদের মাধ্যমে সম্পূর্ণ প্ল্যান প্রস্তুত ও অনুমোদনের পূর্ণ সহায়তা নিন।
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <a

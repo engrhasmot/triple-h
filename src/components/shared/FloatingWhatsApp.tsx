@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import WhatsAppIcon from "@/components/shared/WhatsAppIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { X, Send, Compass, CreditCard, FileText, PhoneCall, CheckCircle2 } from "lucide-react";
@@ -88,8 +89,14 @@ export default function FloatingWhatsApp() {
           <div className="bg-[#075E54] text-white p-4 relative">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center font-bold text-lg border-2 border-white/40">
-                  HH
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border-2 border-white/60 p-1 overflow-hidden shadow-sm">
+                  <Image
+                    src="/images/logo.png"
+                    alt="Triple H Logo"
+                    width={44}
+                    height={44}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#075E54]"></span>
               </div>

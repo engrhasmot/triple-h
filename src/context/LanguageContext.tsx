@@ -26,7 +26,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.callNow": "কল করুন",
 
     // Common
-    "common.tripleh": "ট্রিপল এইচ",
+    "common.tripleh": "ট্রিপল এইচ প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং",
     "common.tagline": "প্ল্যানড্রাফট ও ইঞ্জিনিয়ারিং কনসালটেন্সি",
     "common.callNow": "সরাসরি কল করুন",
     "common.getEstimate": "খরচের হিসাব দেখুন",
@@ -54,7 +54,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.callNow": "Call Now",
 
     // Common
-    "common.tripleh": "Triple H",
+    "common.tripleh": "Triple H Plandraft & Engineering",
     "common.tagline": "Plandraft & Engineering Consultancy",
     "common.callNow": "Call Now",
     "common.getEstimate": "Get Cost Estimate",

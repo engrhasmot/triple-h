@@ -29,8 +29,8 @@ const hindSiliguri = Hind_Siliguri({
 
 export const metadata: Metadata = {
   title: {
-    default: "TRIPLE H PLANDRAFT & ENGINEERING | পরিকল্পিত নকশা, নিরাপদ নির্মাণ",
-    template: "%s | TRIPLE H PLANDRAFT & ENGINEERING",
+    default: "Triple H Plandraft & Engineering | পরিকল্পিত নকশা, নিরাপদ নির্মাণ",
+    template: "%s | Triple H Plandraft & Engineering",
   },
   description:
     "Professional civil engineering consultancy specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision in Bangladesh.",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     "2D plans",
     "3D design",
     "construction",
-    "TRIPLE H",
+    "Triple H Plandraft & Engineering",
     "3D rendering",
     "RAJUK plan approval",
     "plan approval Bangladesh",
@@ -55,18 +55,18 @@ export const metadata: Metadata = {
     "residential building design",
     "commercial building design",
   ],
-  authors: [{ name: "TRIPLE H PLANDRAFT & ENGINEERING" }],
+  authors: [{ name: "Triple H Plandraft & Engineering" }],
   icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
   },
   openGraph: {
-    title: "TRIPLE H PLANDRAFT & ENGINEERING",
+    title: "Triple H Plandraft & Engineering",
     description:
       "Planned Design, Safe Construction — Professional civil engineering consultancy in Bangladesh.",
     type: "website",
     locale: "en_BD",
-    siteName: "TRIPLE H PLANDRAFT & ENGINEERING",
+    siteName: "Triple H Plandraft & Engineering",
     images: [{ url: "/images/logo.png", width: 1024, height: 1024 }],
   },
 };
@@ -93,8 +93,8 @@ export default function RootLayout({
             {JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "TRIPLE H PLANDRAFT & ENGINEERING",
-              alternateName: "Triple H Engineering",
+              name: "Triple H Plandraft & Engineering",
+              alternateName: "Triple H Plandraft & Engineering",
               description: "Professional civil engineering consultancy in Bangladesh specializing in 2D/3D architectural design, structural drafting, BOQ estimation, plan passing, and site supervision.",
               url: getSiteUrl(),
               logo: `${getSiteUrl()}/images/logo.png`,

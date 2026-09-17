@@ -76,11 +76,11 @@ export default function LiveChat() {
         <div className="fixed bottom-40 right-5 z-50 w-[360px] max-w-[calc(100vw-40px)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
           <div className="bg-accent text-primary-foreground px-5 py-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center font-bold text-lg">
-              H
+            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-xs">
+              <img src="/images/logo.png" alt="Triple H" className="w-full h-full object-contain" />
             </div>
             <div>
-              <p className="font-bold text-sm">TRIPLE H PLANDRAFT & ENGINEERING</p>
+              <p className="font-bold text-sm">Triple H Plandraft &amp; Engineering</p>
               <p className="text-xs text-primary-foreground/80">Typically replies in a few minutes</p>
             </div>
           </div>
