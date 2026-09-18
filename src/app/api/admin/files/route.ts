@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
   }
   try {
-    const { id, currentStatus, remark, progressPercentage, milestones, sitePhotos } = await req.json();
+    const { id, currentStatus, remark, progressPercentage, milestones, sitePhotos, documents } = await req.json();
 
     if (!id) {
       return NextResponse.json({ error: 'Missing file id' }, { status: 400 });
@@ -107,6 +107,10 @@ export async function PATCH(req: NextRequest) {
 
     if (sitePhotos && Array.isArray(sitePhotos)) {
       updateFields.sitePhotos = sitePhotos;
+    }
+
+    if (documents && Array.isArray(documents)) {
+      updateFields.documents = documents;
     }
 
     const updated = await PlanStatus.findByIdAndUpdate(

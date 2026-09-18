@@ -31,6 +31,11 @@ import {
   Layers,
   FileCheck,
   RefreshCw,
+  Paperclip,
+  UploadCloud,
+  Eye,
+  HardDrive,
+  FileDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -41,6 +46,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import { adminFetch } from "@/lib/admin-fetch";
 import { format } from "date-fns";
+import PdfPreviewModal, { formatFileSize } from "@/components/shared/PdfPreviewModal";
 
 const DEFAULT_MILESTONES = [
   { title: "১. ডিজিটাল ল্যান্ড সার্ভে ও মাটি পরীক্ষা (Soil Test)", status: "pending" },
@@ -110,6 +116,8 @@ export default function AdminPlanTrackerPage() {
     submissionDate: format(new Date(), "yyyy-MM-dd"),
     expectedCompletionDate: "",
   });
+  const [createPdfFile, setCreatePdfFile] = useState<File | null>(null);
+  const [createPdfTitle, setCreatePdfTitle] = useState("");
 
   // Status & Remark Modal State
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -131,6 +139,24 @@ export default function AdminPlanTrackerPage() {
 
   // Delete State
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Documents / PDF Modal State
+  const [docsModalOpen, setDocsModalOpen] = useState(false);
+  const [selectedPlanForDocs, setSelectedPlanForDocs] = useState<any>(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfTitle, setPdfTitle] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [deletingDocKey, setDeletingDocKey] = useState<string | null>(null);
+
+  // PDF Preview Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{
+    url: string;
+    title: string;
+    fileId?: string;
+    uploadedAt?: any;
+    sizeBytes?: number;
+  } | null>(null);
 
   const fetchPlans = async () => {
     setLoading(true);
@@ -196,8 +222,29 @@ export default function AdminPlanTrackerPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
 
+      // If a PDF file was selected during creation, upload it now
+      if (createPdfFile && data.data?._id) {
+        try {
+          const uploadForm = new FormData();
+          uploadForm.append("planId", data.data._id);
+          uploadForm.append("file", createPdfFile);
+          if (createPdfTitle.trim()) {
+            uploadForm.append("customName", createPdfTitle.trim());
+          }
+          await adminFetch("/api/admin/files/upload", {
+            method: "POST",
+            body: uploadForm,
+          });
+          toast.success("নকশা PDF ফাইল সফলভাবে সংযুক্ত হয়েছে!");
+        } catch (pdfErr: any) {
+          toast.error("প্ল্যান তৈরি হয়েছে কিন্তু PDF আপলোডে সমস্যা: " + (pdfErr.message || "ত্রুটি"));
+        }
+      }
+
       toast.success("নতুন ট্র্যাকিং ফাইল তৈরি হয়েছে!");
       setCreateOpen(false);
+      setCreatePdfFile(null);
+      setCreatePdfTitle("");
       setNewPlan({
         clientName: "",
         phone: "",
@@ -286,6 +333,124 @@ export default function AdminPlanTrackerPage() {
     }
   };
 
+  // Open PDF Preview
+  const handleOpenPreview = (doc: any, fileId?: string) => {
+    setPreviewDoc({
+      url: doc.url,
+      title: doc.name,
+      fileId: fileId || selectedPlanForDocs?.fileId,
+      uploadedAt: doc.uploadedAt,
+      sizeBytes: doc.sizeBytes,
+    });
+    setPreviewModalOpen(true);
+  };
+
+  // Upload PDF Document
+  const handleUploadPdf = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPlanForDocs) return;
+    if (!selectedFile) {
+      toast.error("অনুগ্রহ করে একটি PDF ফাইল নির্বাচন করুন");
+      return;
+    }
+
+    if (!selectedFile.name.toLowerCase().endsWith(".pdf") && selectedFile.type !== "application/pdf") {
+      toast.error("শুধুমাত্র PDF ফাইল আপলোড করা যাবে");
+      return;
+    }
+
+    if (selectedFile.size > 25 * 1024 * 1024) {
+      toast.error("ফাইল সাইজ সর্বোচ্চ ২৫ মেগাবাইট (25 MB) হতে পারবে");
+      return;
+    }
+
+    setUploadingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append("planId", selectedPlanForDocs._id);
+      formData.append("file", selectedFile);
+      if (pdfTitle.trim()) {
+        formData.append("customName", pdfTitle.trim());
+      }
+
+      const res = await adminFetch("/api/admin/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "আপলোড ব্যর্থ হয়েছে");
+
+      toast.success("PDF ফাইল সফলভাবে আপলোড হয়েছে!");
+      setSelectedFile(null);
+      setPdfTitle("");
+
+      // Update in selected modal
+      const newDocsList = data.documents || [...(selectedPlanForDocs.documents || []), data.data];
+      setSelectedPlanForDocs((prev: any) => ({
+        ...prev,
+        documents: newDocsList,
+      }));
+
+      // Update in plans list
+      setPlans((prev) =>
+        prev.map((p) =>
+          p._id === selectedPlanForDocs._id
+            ? { ...p, documents: newDocsList }
+            : p
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.message || "PDF আপলোড করতে সমস্যা হয়েছে");
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  // Delete PDF Document
+  const handleDeletePdf = async (doc: any) => {
+    if (!selectedPlanForDocs) return;
+    if (!confirm(`আপনি কি "${doc.name}" ফাইলটি মুছে ফেলতে চান?`)) return;
+
+    const docKey = doc.publicId || doc.url;
+    setDeletingDocKey(docKey);
+    try {
+      const params = new URLSearchParams({
+        planId: selectedPlanForDocs._id,
+        ...(doc.publicId ? { publicId: doc.publicId } : {}),
+        ...(doc.url ? { url: doc.url } : {}),
+      });
+
+      const res = await adminFetch(`/api/admin/files/upload?${params.toString()}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "মুছে ফেলতে সমস্যা হয়েছে");
+
+      toast.success("ডকুমেন্ট সফলভাবে মুছে ফেলা হয়েছে");
+
+      const updatedDocs = (selectedPlanForDocs.documents || []).filter(
+        (d: any) => (doc.publicId ? d.publicId !== doc.publicId : d.url !== doc.url)
+      );
+
+      setSelectedPlanForDocs((prev: any) => ({
+        ...prev,
+        documents: updatedDocs,
+      }));
+
+      setPlans((prev) =>
+        prev.map((p) =>
+          p._id === selectedPlanForDocs._id
+            ? { ...p, documents: updatedDocs }
+            : p
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.message || "ফাইল মুছতে সমস্যা হয়েছে");
+    } finally {
+      setDeletingDocKey(null);
+    }
+  };
+
   // Send WhatsApp Progress Update to Client
   const handleWhatsAppUpdate = (plan: any) => {
     const statusText = STATUS_CONFIG[plan.currentStatus]?.label || plan.currentStatus;
@@ -344,6 +509,22 @@ export default function AdminPlanTrackerPage() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             রিফ্রেশ
+          </Button>
+
+          <Button
+            onClick={() => {
+              if (plans.length > 0 && !selectedPlanForDocs) {
+                setSelectedPlanForDocs(plans[0]);
+              }
+              setPdfTitle("");
+              setSelectedFile(null);
+              setDocsModalOpen(true);
+            }}
+            size="sm"
+            className="gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs cursor-pointer"
+          >
+            <UploadCloud className="w-4 h-4" />
+            PDF ড্রয়িং আপলোড
           </Button>
 
           <Button
@@ -575,7 +756,7 @@ export default function AdminPlanTrackerPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 text-[10px] px-2 text-primary"
+                                className="h-7 text-[10px] px-1.5 text-primary"
                                 onClick={() => {
                                   setSelectedPlanForStatus(plan);
                                   setTargetStatus(plan.currentStatus);
@@ -587,8 +768,23 @@ export default function AdminPlanTrackerPage() {
 
                               <Button
                                 size="sm"
+                                className="h-7 text-[10px] px-2 bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1 cursor-pointer shadow-xs"
+                                onClick={() => {
+                                  setSelectedPlanForDocs(plan);
+                                  setPdfTitle("");
+                                  setSelectedFile(null);
+                                  setDocsModalOpen(true);
+                                }}
+                                title="PDF ডকুমেন্টস আপলোড ও ভিউ"
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                <span>PDF ({(plan.documents || []).length})</span>
+                              </Button>
+
+                              <Button
+                                size="sm"
                                 variant="ghost"
-                                className="h-7 text-[10px] px-2 text-emerald-600 hover:text-emerald-700"
+                                className="h-7 text-[10px] px-1.5 text-emerald-600 hover:text-emerald-700"
                                 onClick={() => handleWhatsAppUpdate(plan)}
                               >
                                 WhatsApp
@@ -662,6 +858,20 @@ export default function AdminPlanTrackerPage() {
 
                         {/* Top Actions */}
                         <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs cursor-pointer"
+                            onClick={() => {
+                              setSelectedPlanForDocs(plan);
+                              setPdfTitle("");
+                              setSelectedFile(null);
+                              setDocsModalOpen(true);
+                            }}
+                          >
+                            <UploadCloud className="w-3.5 h-3.5" />
+                            PDF আপলোড ও ভিউ ({(plan.documents || []).length})
+                          </Button>
+
                           <Button
                             size="sm"
                             variant="outline"
@@ -851,6 +1061,41 @@ export default function AdminPlanTrackerPage() {
                           </a>
                         </div>
                       </div>
+
+                      {/* Attached Documents Row */}
+                      {plan.documents && plan.documents.length > 0 && (
+                        <div className="lg:col-span-3 pt-3 border-t flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 shrink-0">
+                            <Paperclip className="w-3.5 h-3.5 text-rose-500" />
+                            সংযুক্ত PDF নকশা ({plan.documents.length}):
+                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {plan.documents.map((doc: any, i: number) => (
+                              <div
+                                key={i}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-rose-500/10 border border-rose-500/25 text-foreground hover:bg-rose-500/15 transition-all"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                                <span className="max-w-[200px] truncate font-medium">{doc.name}</span>
+                                {doc.sizeBytes && (
+                                  <span className="text-[10px] text-muted-foreground font-mono">
+                                    ({formatFileSize(doc.sizeBytes)})
+                                  </span>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 hover:text-primary"
+                                  onClick={() => handleOpenPreview(doc, plan.fileId)}
+                                  title="প্রিভিউ দেখুন"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -939,6 +1184,44 @@ export default function AdminPlanTrackerPage() {
                   onChange={(e) => setNewPlan({ ...newPlan, expectedCompletionDate: e.target.value })}
                 />
               </div>
+            </div>
+
+            {/* Direct PDF Attachment in Create Modal */}
+            <div className="p-3.5 rounded-xl border border-dashed border-rose-500/40 bg-rose-500/5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="createPdfInput" className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <UploadCloud className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                  ড্রয়িং বা অনুমোদন কপি (PDF) যুক্ত করুন (ঐচ্ছিক)
+                </Label>
+                <span className="text-[10px] text-muted-foreground font-mono">PDF সর্বোচ্চ 25MB</span>
+              </div>
+              <Input
+                id="createPdfInput"
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  setCreatePdfFile(f);
+                  if (f && !createPdfTitle) {
+                    setCreatePdfTitle(f.name.replace(/\.[^/.]+$/, ""));
+                  }
+                }}
+                className="bg-background text-xs file:text-xs file:font-semibold file:bg-rose-600 file:text-white file:rounded file:border-0 cursor-pointer h-9"
+              />
+              {createPdfFile && (
+                <div className="space-y-1.5 pt-1">
+                  <Input
+                    placeholder="ডকুমেন্টের নাম (যেমন: অনুমোদিত আর্কিটেকচারাল ফ্লোর প্ল্যান)"
+                    value={createPdfTitle}
+                    onChange={(e) => setCreatePdfTitle(e.target.value)}
+                    className="bg-background text-xs h-8"
+                  />
+                  <div className="flex items-center gap-2 text-[11px] text-emerald-600 font-medium">
+                    <FileCheck className="w-3.5 h-3.5" />
+                    <span>{createPdfFile.name} ({formatFileSize(createPdfFile.size)}) — ফাইল তৈরির সাথে সাথেই সংযুক্ত হবে</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
@@ -1238,6 +1521,296 @@ export default function AdminPlanTrackerPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── DOCUMENTS & PDF MANAGEMENT MODAL ── */}
+      <Dialog open={docsModalOpen} onOpenChange={setDocsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <FileText className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+              প্ল্যান ডকুমেন্টস ও PDF ফাইল ম্যানেজমেন্ট
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPlanForDocs?.projectTitle} ({selectedPlanForDocs?.fileId}) — ক্লায়েন্ট সাইট থেকে এই ফাইলগুলো সরাসরি দেখতে ও ডাউনলোড করতে পারবেন।
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 mt-3">
+            {/* Target Plan Selector */}
+            {plans.length > 0 && (
+              <div className="space-y-1.5 bg-muted/40 p-3.5 rounded-xl border">
+                <div className="flex justify-between items-center">
+                  <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-primary" />
+                    টার্গেট প্ল্যান ফাইল:
+                  </Label>
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    {selectedPlanForDocs?.fileId || "ফাইল সিলেক্ট করুন"}
+                  </span>
+                </div>
+                <select
+                  value={selectedPlanForDocs?._id || ""}
+                  onChange={(e) => {
+                    const target = plans.find((p) => p._id === e.target.value);
+                    if (target) setSelectedPlanForDocs(target);
+                  }}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                >
+                  {plans.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.fileId} — {p.projectTitle} ({p.clientName} | {p.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Quick File & Client Summary Card */}
+            {selectedPlanForDocs && (
+              <div className="bg-muted/20 p-3 rounded-xl border flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div>
+                  <span className="text-muted-foreground">ক্লায়েন্ট: </span>
+                  <span className="font-bold text-foreground">{selectedPlanForDocs?.clientName}</span>
+                  <span className="mx-2 text-muted-foreground/50">•</span>
+                  <span className="text-muted-foreground">মোবাইল: </span>
+                  <span className="font-mono font-bold text-foreground">{selectedPlanForDocs?.phone}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">লোকেশন: </span>
+                  <span className="font-semibold text-foreground">{selectedPlanForDocs?.location}</span>
+                </div>
+              </div>
+            )}
+
+            {/* ── PDF Upload Form ── */}
+            <form onSubmit={handleUploadPdf} className="p-4 rounded-xl border border-dashed border-rose-500/30 bg-rose-500/5 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <UploadCloud className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                  নতুন PDF ডকুমেন্ট আপলোড করুন
+                </Label>
+                <span className="text-[11px] text-muted-foreground">সর্বোচ্চ ২৫ মেগাবাইট (25 MB)</span>
+              </div>
+
+              {/* Title presets */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] text-muted-foreground font-medium">কুইক টাইটেল সিলেক্ট করুন:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "আর্কিটেকচারাল নকশা ও ফ্লোর প্ল্যান",
+                    "স্ট্রাকচারাল ড্রয়িং ও ডিজাইন",
+                    "পৌরসভা / রাজউক অনুমোদন কপি",
+                    "মাটি পরীক্ষা ও সয়েল টেস্ট রিপোর্ট",
+                    "ইলেকট্রিক্যাল ও প্লাম্বিং লে-আউট",
+                    "থ্রিডি এলিভেশন ও ফ্রন্ট ভিউ",
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setPdfTitle(preset)}
+                      className="px-2 py-0.5 text-[11px] rounded bg-background hover:bg-muted border border-border text-foreground transition-all cursor-pointer"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Title Input */}
+              <div className="space-y-1">
+                <Label htmlFor="docTitle" className="text-xs">ডকুমেন্টের নাম / টাইটেল</Label>
+                <Input
+                  id="docTitle"
+                  placeholder="উদা: অনুমোদিত আর্কিটেকচারাল ফ্লোর প্ল্যান (২য় তলা)"
+                  value={pdfTitle}
+                  onChange={(e) => setPdfTitle(e.target.value)}
+                  className="bg-background text-xs h-9"
+                />
+              </div>
+
+              {/* File input */}
+              <div className="space-y-1">
+                <Label htmlFor="pdfFileInput" className="text-xs">PDF ফাইল নির্বাচন করুন *</Label>
+                <Input
+                  id="pdfFileInput"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    setSelectedFile(f);
+                    if (f && !pdfTitle) {
+                      setPdfTitle(f.name.replace(/\.[^/.]+$/, ""));
+                    }
+                  }}
+                  className="bg-background text-xs file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground file:rounded file:border-0 cursor-pointer h-10"
+                />
+              </div>
+
+              {selectedFile && (
+                <div className="p-2 rounded bg-background border flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <FileText className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-semibold truncate">{selectedFile.name}</span>
+                    <span className="text-muted-foreground font-mono">({formatFileSize(selectedFile.size)})</span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">রেডি</Badge>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="submit"
+                  disabled={uploadingPdf || !selectedFile}
+                  className="gap-2 h-9 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                >
+                  {uploadingPdf ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      আপলোড হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-4 h-4" />
+                      PDF ফাইল আপলোড করুন
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+
+            {/* ── Attached Documents List ── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <FileCheck className="w-4 h-4 text-primary" />
+                  সংযুক্ত PDF ফাইলসমূহ ({(selectedPlanForDocs?.documents || []).length})
+                </h4>
+              </div>
+
+              {(!selectedPlanForDocs?.documents || selectedPlanForDocs.documents.length === 0) ? (
+                <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed text-muted-foreground space-y-2">
+                  <FileX className="w-9 h-9 mx-auto opacity-40 text-rose-500" />
+                  <p className="text-xs font-medium">এই ফাইলে এখনো কোনো PDF ডকুমেন্ট সংযুক্ত করা হয়নি।</p>
+                  <p className="text-[11px]">উপরের ফরমটি ব্যবহার করে দ্রুত আর্কিটেকচারাল নকশা বা অনুমোদন কপি আপলোড করুন।</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {selectedPlanForDocs.documents.map((doc: any, i: number) => {
+                    const docKey = doc.publicId || doc.url;
+                    const isDeleting = deletingDocKey === docKey;
+
+                    return (
+                      <div
+                        key={i}
+                        className="p-3 bg-card rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-xs transition-all"
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 mt-0.5 sm:mt-0">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="font-semibold text-xs text-foreground truncate">
+                              {doc.name}
+                            </h5>
+                            <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground mt-0.5">
+                              {doc.sizeBytes && (
+                                <span className="flex items-center gap-1 font-mono">
+                                  <HardDrive className="w-3 h-3" />
+                                  {formatFileSize(doc.sizeBytes)}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {doc.uploadedAt ? format(new Date(doc.uploadedAt), "dd MMM yyyy, hh:mm a") : "যুক্ত করা হয়েছে"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Document Actions */}
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1 px-2.5 hover:bg-primary/10 hover:text-primary hover:border-primary/40 font-medium"
+                            onClick={() => handleOpenPreview(doc, selectedPlanForDocs?.fileId)}
+                            title="প্রিভিউ দেখুন"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>প্রিভিউ</span>
+                          </Button>
+
+                          <a
+                            href={doc.url}
+                            download={doc.name ? `${doc.name}.pdf` : "document.pdf"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1 px-2 hover:bg-accent/10 hover:text-accent hover:border-accent/40"
+                              title="ডাউনলোড করুন"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span className="hidden md:inline">ডাউনলোড</span>
+                            </Button>
+                          </a>
+
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              title="নতুন ট্যাবে খুলুন"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </Button>
+                          </a>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                            disabled={isDeleting}
+                            onClick={() => handleDeletePdf(doc)}
+                            title="ডকুমেন্ট মুছে ফেলুন"
+                          >
+                            {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t">
+              <Button variant="outline" onClick={() => setDocsModalOpen(false)}>
+                বন্ধ করুন
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── PDF PREVIEW MODAL ── */}
+      {previewDoc && (
+        <PdfPreviewModal
+          open={previewModalOpen}
+          onOpenChange={setPreviewModalOpen}
+          url={previewDoc.url}
+          title={previewDoc.title}
+          fileId={previewDoc.fileId}
+          uploadedAt={previewDoc.uploadedAt}
+          sizeBytes={previewDoc.sizeBytes}
+        />
+      )}
     </div>
   );
 }

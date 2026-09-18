@@ -19,6 +19,8 @@ export interface IPlanDocument {
   url: string;
   publicId: string;
   uploadedAt: Date;
+  sizeBytes?: number;
+  fileType?: string;
 }
 
 export interface IPlanMilestone {
@@ -72,6 +74,8 @@ const PlanDocumentSchema = new Schema<IPlanDocument>(
     url: { type: String, required: true },
     publicId: { type: String, required: true },
     uploadedAt: { type: Date, default: Date.now },
+    sizeBytes: { type: Number },
+    fileType: { type: String, default: 'application/pdf' },
   },
   { _id: false }
 );

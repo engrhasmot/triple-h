@@ -1,4 +1,4 @@
-﻿import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type FoundationRecommendation =
   | 'isolated-footing'
@@ -111,19 +111,24 @@ const SoilTestSchema = new Schema<ISoilTest>(
 );
 
 SoilTestSchema.pre('save', function (next) {
-  if (this.layers && this.layers.length > 0) {
-    this.layers.forEach((layer) => {
-      layer.allowableBearing = nValueToAllowableBearing(layer.nValue || 0);
-    });
+  try {
+    if (this.layers && this.layers.length > 0) {
+      this.layers.forEach((layer) => {
+        layer.allowableBearing = nValueToAllowableBearing(Number(layer.nValue) || 0);
+      });
 
-    const deepLayers = this.layers.filter((l) => l.depthFrom >= 10);
-    const candidateLayers = deepLayers.length > 0 ? deepLayers : this.layers;
-    const minBearing = Math.min(...candidateLayers.map((l) => l.allowableBearing));
+      const deepLayers = this.layers.filter((l) => Number(l.depthFrom) >= 10);
+      const candidateLayers = deepLayers.length > 0 ? deepLayers : this.layers;
+      const bearings = candidateLayers.map((l) => l.allowableBearing).filter((b) => typeof b === 'number' && !isNaN(b));
+      const minBearing = bearings.length > 0 ? Math.min(...bearings) : 1.0;
 
-    this.safeAllowableBearing = minBearing;
-    this.recommendedFoundation = getFoundationRecommendation(minBearing);
+      this.safeAllowableBearing = minBearing;
+      this.recommendedFoundation = getFoundationRecommendation(minBearing);
+    }
+    next();
+  } catch (err: any) {
+    next(err);
   }
-  next();
 });
 
 SoilTestSchema.index({ date: -1 });

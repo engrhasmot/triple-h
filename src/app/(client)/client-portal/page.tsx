@@ -37,6 +37,8 @@ import {
   Megaphone,
   Flame,
   Share2,
+  Eye,
+  HardDrive,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
+import PdfPreviewModal, { formatFileSize } from "@/components/shared/PdfPreviewModal";
 
 function formatBDT(amount: number) {
   return "৳" + Number(amount || 0).toLocaleString("en-IN");
@@ -103,6 +106,27 @@ export default function ClientPortalPage() {
     totalDue: 0,
     inspectionCount: 0,
   });
+
+  // PDF Preview State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{
+    url: string;
+    title: string;
+    fileId?: string;
+    uploadedAt?: any;
+    sizeBytes?: number;
+  } | null>(null);
+
+  const handleOpenPreview = (doc: any, fileId?: string) => {
+    setPreviewDoc({
+      url: doc.url,
+      title: doc.name,
+      fileId,
+      uploadedAt: doc.uploadedAt,
+      sizeBytes: doc.sizeBytes,
+    });
+    setPreviewModalOpen(true);
+  };
 
   // Support / Site Visit Request Form
   const [supportCategory, setSupportCategory] = useState("সাইট ভিজিট রিকোয়েস্ট");
@@ -678,25 +702,42 @@ export default function ClientPortalPage() {
                         {project.documents && project.documents.length > 0 && (
                           <div className="space-y-3 pt-2">
                             <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <FileText className="w-4 h-4 text-accent" /> অনুমোদিত ড্রয়িং ও ডকুমেন্টস ডাউনলোড
+                              <FileText className="w-4 h-4 text-accent" /> অনুমোদিত ড্রয়িং ও ডকুমেন্টস ({project.documents.length}টি)
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {project.documents.map((doc: any, dIdx: number) => (
-                                <div key={dIdx} className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:border-accent/40 transition-colors">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                                <div key={dIdx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border bg-card hover:border-accent/40 transition-colors gap-3">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 border border-rose-500/20">
                                       <FileText className="w-4 h-4" />
                                     </div>
-                                    <div>
-                                      <p className="font-semibold text-xs text-foreground">{doc.name}</p>
-                                      <p className="text-[10px] text-muted-foreground">{safeFormatDate(doc.uploadedAt)}</p>
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-xs text-foreground truncate">{doc.name}</p>
+                                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                        {doc.sizeBytes && doc.sizeBytes > 0 && (
+                                          <span className="font-mono flex items-center gap-0.5">
+                                            <HardDrive className="w-2.5 h-2.5" />
+                                            {formatFileSize(doc.sizeBytes)}
+                                          </span>
+                                        )}
+                                        <span>{safeFormatDate(doc.uploadedAt)}</span>
+                                      </div>
                                     </div>
                                   </div>
-                                  <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                    <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8 font-bold border-accent/30 text-accent hover:bg-accent/10">
-                                      <Download className="w-3.5 h-3.5" /> ডাউনলোড
+                                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                    <Button
+                                      size="sm"
+                                      className="gap-1 text-xs h-7 font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+                                      onClick={() => handleOpenPreview(doc, project.fileId)}
+                                    >
+                                      <Eye className="w-3 h-3" /> প্রিভিউ
                                     </Button>
-                                  </a>
+                                    <a href={doc.url} download={doc.name ? `${doc.name}.pdf` : "document.pdf"} target="_blank" rel="noopener noreferrer">
+                                      <Button size="sm" variant="outline" className="gap-1 text-xs h-7 font-bold border-accent/30 text-accent hover:bg-accent/10">
+                                        <Download className="w-3 h-3" /> ডাউনলোড
+                                      </Button>
+                                    </a>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1717,6 +1758,19 @@ export default function ClientPortalPage() {
           </div>
         )}
       </div>
+
+      {/* PDF Preview Modal */}
+      {previewDoc && (
+        <PdfPreviewModal
+          open={previewModalOpen}
+          onOpenChange={setPreviewModalOpen}
+          url={previewDoc.url}
+          title={previewDoc.title}
+          fileId={previewDoc.fileId}
+          uploadedAt={previewDoc.uploadedAt}
+          sizeBytes={previewDoc.sizeBytes}
+        />
+      )}
     </div>
   );
 }

@@ -2,10 +2,27 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Loader2, FileText, CheckCircle2, Clock, AlertTriangle, FileX, MapPin, Download, FileDown, Phone, ChevronRight, User } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  FileText,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  FileX,
+  MapPin,
+  Download,
+  Phone,
+  ChevronRight,
+  User,
+  Eye,
+  ExternalLink,
+  HardDrive,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import SEOHead from "@/components/shared/SEOHead";
+import PdfPreviewModal, { formatFileSize } from "@/components/shared/PdfPreviewModal";
 
 interface PlanData {
   _id: string;
@@ -16,7 +33,13 @@ interface PlanData {
   location: string;
   currentStatus: string;
   statusHistory: { status: string; note: string; date: string }[];
-  documents: { name: string; url: string; uploadedAt: string }[];
+  documents: {
+    name: string;
+    url: string;
+    uploadedAt?: string;
+    sizeBytes?: number;
+    publicId?: string;
+  }[];
   submissionDate: string;
 }
 
@@ -29,6 +52,27 @@ function TrackPlanContent() {
   const [results, setResults] = useState<PlanData[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PlanData | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // PDF Preview State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{
+    url: string;
+    title: string;
+    fileId?: string;
+    uploadedAt?: any;
+    sizeBytes?: number;
+  } | null>(null);
+
+  const handleOpenPreview = (doc: any, fileId: string) => {
+    setPreviewDoc({
+      url: doc.url,
+      title: doc.name,
+      fileId,
+      uploadedAt: doc.uploadedAt,
+      sizeBytes: doc.sizeBytes,
+    });
+    setPreviewModalOpen(true);
+  };
 
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
@@ -221,31 +265,101 @@ function TrackPlanContent() {
 
       {/* Documents */}
       {plan.documents && plan.documents.length > 0 && (
-        <div className="border-t border-border p-6 md:p-10">
-          <h3 className="text-lg font-bold font-heading mb-4 flex items-center gap-2">
-            <FileDown className="w-5 h-5 text-accent" />
-            Downloadable Documents
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="border-t border-border p-6 md:p-10 bg-card/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <h3 className="text-xl font-bold font-heading text-foreground flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <FileText className="w-4 h-4" />
+                </div>
+                অনুমোদিত নকশা ও প্রজেক্ট ডকুমেন্টস (PDF)
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                আপনার অনুমোদিত প্ল্যান, ড্রয়িং ও প্রয়োজনীয় কাগজপত্র সরাসরি ব্রাউজারে প্রিভিউ দেখুন অথবা ডাউনলোড করুন।
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0 self-start sm:self-auto">
+              {plan.documents.length}টি ফাইল সংযুক্ত
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {plan.documents.map((doc, i) => (
-              <a
+              <div
                 key={i}
-                href={doc.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-xl hover:bg-accent/10 hover:border-accent/40 transition-all group"
+                className="bg-card p-4 rounded-2xl border border-border shadow-xs hover:shadow-md hover:border-rose-500/30 transition-all flex flex-col justify-between gap-3 group"
               >
-                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-                  <FileText className="w-5 h-5 text-accent" />
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-11 h-11 bg-rose-500/10 rounded-xl flex items-center justify-center shrink-0 text-rose-600 dark:text-rose-400 border border-rose-500/20 group-hover:bg-rose-500/20 transition-colors">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-foreground truncate font-heading group-hover:text-primary transition-colors">
+                        {doc.name}
+                      </h4>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+                        PDF
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground mt-1">
+                      {doc.sizeBytes && doc.sizeBytes > 0 && (
+                        <span className="flex items-center gap-1 font-mono">
+                          <HardDrive className="w-3 h-3" />
+                          {formatFileSize(doc.sizeBytes)}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        {doc.uploadedAt ? format(new Date(doc.uploadedAt), "dd MMM yyyy") : "Available"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{doc.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {doc.uploadedAt ? format(new Date(doc.uploadedAt), "dd MMM yyyy") : "Available"}
-                  </p>
+
+                <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1.5 h-8 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+                    onClick={() => handleOpenPreview(doc, plan.fileId)}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    প্রিভিউ দেখুন
+                  </Button>
+
+                  <a
+                    href={doc.url}
+                    download={doc.name ? `${doc.name}.pdf` : "document.pdf"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex"
+                  >
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 h-8 text-xs font-semibold hover:border-accent hover:text-accent"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      ডাউনলোড
+                    </Button>
+                  </a>
+
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex"
+                  >
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      title="নতুন ট্যাবে ওপেন করুন"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </a>
                 </div>
-                <Download className="w-4 h-4 text-accent shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -315,6 +429,19 @@ function TrackPlanContent() {
           selectedPlan ? renderPlanDetail(selectedPlan) : renderFileList()
         )}
       </section>
+
+      {/* PDF Preview Modal */}
+      {previewDoc && (
+        <PdfPreviewModal
+          open={previewModalOpen}
+          onOpenChange={setPreviewModalOpen}
+          url={previewDoc.url}
+          title={previewDoc.title}
+          fileId={previewDoc.fileId}
+          uploadedAt={previewDoc.uploadedAt}
+          sizeBytes={previewDoc.sizeBytes}
+        />
+      )}
     </div>
   );
 }
