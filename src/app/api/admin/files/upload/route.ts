@@ -3,7 +3,9 @@ import path from "path";
 import fs from "fs/promises";
 import dbConnect from "@/lib/db";
 import PlanStatus from "@/models/plan-status.model";
+import PlanDocumentFile from "@/models/plan-document-file.model";
 import cloudinary from "@/lib/cloudinary";
+import mongoose from "mongoose";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 
@@ -107,22 +109,34 @@ export async function POST(req: NextRequest) {
         fileUrl = cRes.secure_url || cRes.url;
         publicId = cRes.public_id;
       } catch (cloudErr) {
-        console.warn("Cloudinary upload failed, falling back to local disk storage:", cloudErr);
+        console.warn("Cloudinary upload failed, falling back to database storage:", cloudErr);
       }
     }
 
-    // Fallback or default to local storage
+    // Database-backed storage (100% reliable on Vercel, Docker & Localhost)
     if (!fileUrl) {
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "plans");
-      await fs.mkdir(uploadDir, { recursive: true });
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_") || "drawing.pdf";
+      const docFile = await PlanDocumentFile.create({
+        planId: plan._id,
+        fileId: plan.fileId,
+        filename: cleanFileName,
+        contentType: "application/pdf",
+        sizeBytes: buffer.length,
+        data: buffer,
+      });
 
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const safeFileName = `${plan.fileId || "plan"}-${Date.now()}-${cleanFileName}`;
-      const filePath = path.join(uploadDir, safeFileName);
+      fileUrl = `/api/documents/${docFile._id}/${encodeURIComponent(cleanFileName)}`;
+      publicId = `db-${docFile._id}`;
 
-      await fs.writeFile(filePath, buffer);
-      fileUrl = `/uploads/plans/${safeFileName}`;
-      publicId = `local-${safeFileName}`;
+      // Optional local disk cache for dev mode
+      try {
+        const uploadDir = path.join(process.cwd(), "public", "uploads", "plans");
+        await fs.mkdir(uploadDir, { recursive: true });
+        const safeFileName = `${plan.fileId || "plan"}-${Date.now()}-${cleanFileName}`;
+        await fs.writeFile(path.join(uploadDir, safeFileName), buffer);
+      } catch (_diskErr) {
+        // Safe to ignore on serverless/read-only filesystems
+      }
     }
 
     const docTitle = customName?.trim() || file.name.replace(/\.[^/.]+$/, "") || "Plan Document";
@@ -190,8 +204,25 @@ export async function DELETE(req: NextRequest) {
 
     const docToDelete = plan.documents[docIndex];
 
-    // Attempt to remove local file if stored locally
-    if (docToDelete.publicId?.startsWith("local-") || docToDelete.url?.startsWith("/uploads/plans/")) {
+    // Delete based on storage type
+    if (docToDelete.publicId?.startsWith("db-") || docToDelete.url?.startsWith("/api/documents/")) {
+      try {
+        let fileDocId = "";
+        if (docToDelete.publicId?.startsWith("db-")) {
+          fileDocId = docToDelete.publicId.replace(/^db-/, "");
+        } else if (docToDelete.url?.startsWith("/api/documents/")) {
+          const parts = docToDelete.url.split("/").filter(Boolean);
+          if (parts.length >= 3) {
+            fileDocId = parts[2];
+          }
+        }
+        if (fileDocId && mongoose.Types.ObjectId.isValid(fileDocId)) {
+          await PlanDocumentFile.findByIdAndDelete(fileDocId);
+        }
+      } catch (_dbErr) {
+        console.warn("Failed to delete document from database:", _dbErr);
+      }
+    } else if (docToDelete.publicId?.startsWith("local-") || docToDelete.url?.startsWith("/uploads/plans/")) {
       try {
         const localFileName = docToDelete.url.replace(/^\/uploads\/plans\//, "");
         const localPath = path.join(process.cwd(), "public", "uploads", "plans", localFileName);
