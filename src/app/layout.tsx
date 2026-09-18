@@ -57,7 +57,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Triple H Plandraft & Engineering" }],
   icons: {
-    icon: "/images/logo.png",
+    icon: [
+      { url: "/images/logo.png", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/images/logo.png",
     apple: "/images/logo.png",
   },
   openGraph: {

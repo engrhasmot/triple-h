@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IClientUser extends Document {
+  clientId?: string;
   name: string;
   phone: string;
   email?: string;
@@ -17,6 +18,14 @@ export interface IClientUser extends Document {
 
 const ClientUserSchema = new Schema<IClientUser>(
   {
+    clientId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      uppercase: true,
+      index: true,
+    },
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -70,6 +79,16 @@ const ClientUserSchema = new Schema<IClientUser>(
     timestamps: true,
   }
 );
+
+// Auto-generate clientId if missing
+ClientUserSchema.pre("validate", async function (next) {
+  if (this.isNew && !this.clientId) {
+    const year = new Date().getFullYear();
+    const count = await mongoose.models.ClientUser?.countDocuments() || 0;
+    this.clientId = `CL-${year}-${String(count + 1).padStart(4, "0")}`;
+  }
+  next();
+});
 
 const ClientUser: Model<IClientUser> =
   mongoose.models.ClientUser || mongoose.model<IClientUser>("ClientUser", ClientUserSchema);
