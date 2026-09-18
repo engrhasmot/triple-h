@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { UploadWidget } from "@/components/admin/UploadWidget";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { adminFetch } from "@/lib/admin-fetch";
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { value: "2d-plan", label: "2D Plan" },
   { value: "3d-exterior", label: "3D Exterior" },
   { value: "3d-interior", label: "3D Interior" },
@@ -23,6 +23,7 @@ const CATEGORIES = [
 export default function NewProjectPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<{ value: string; label: string }[]>(DEFAULT_CATEGORIES);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -34,6 +35,25 @@ export default function NewProjectPage() {
     status: "draft",
     coverImageUrl: "",
     coverImagePublicId: "",
+  });
+
+  useEffect(() => {
+    fetch("/api/project-categories")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data && json.data.length > 0) {
+          const mapped = json.data.map((c: any) => ({
+            value: c.slug,
+            label: c.name,
+          }));
+          setCategories(mapped);
+          setForm((prev) => ({
+            ...prev,
+            category: prev.category || mapped[0].value,
+          }));
+        }
+      })
+      .catch((err) => console.error("Failed to load categories:", err));
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,7 +121,7 @@ export default function NewProjectPage() {
               <Select value={form.category} onValueChange={(v) => setForm({...form, category: v ?? ""})}>
                 <SelectTrigger id="cat"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -52,7 +52,7 @@ export const planStatusSearchSchema = z.object({
 export const projectSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().min(1, 'Description is required'),
-  category: z.enum(['2d-plan', '3d-exterior', '3d-interior', 'construction']),
+  category: z.string().min(1, 'Category is required'),
   client: z.string().optional(),
   location: z.string().min(1, 'Location is required'),
   area: z.number().positive().optional(),

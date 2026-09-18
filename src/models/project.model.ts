@@ -11,7 +11,7 @@ export interface IProject extends Document {
   title: string;
   slug: string;
   description: string;
-  category: '2d-plan' | '3d-exterior' | '3d-interior' | 'construction';
+  category: string;
   client?: string;
   location: string;
   area?: number;
@@ -55,11 +55,9 @@ const ProjectSchema = new Schema<IProject>(
     },
     category: {
       type: String,
-      required: true,
-      enum: {
-        values: ['2d-plan', '3d-exterior', '3d-interior', 'construction'],
-        message: '{VALUE} is not a valid category',
-      },
+      required: [true, 'Project category is required'],
+      trim: true,
+      index: true,
     },
     client: { type: String, trim: true },
     location: {

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { adminFetch } from "@/lib/admin-fetch";
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { value: "2d-plan", label: "2D Plan" },
   { value: "3d-exterior", label: "3D Exterior" },
   { value: "3d-interior", label: "3D Interior" },
@@ -25,6 +25,7 @@ export default function EditProjectPage() {
   const params = useParams();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<{ value: string; label: string }[]>(DEFAULT_CATEGORIES);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -37,6 +38,22 @@ export default function EditProjectPage() {
     coverImageUrl: "",
     coverImagePublicId: "",
   });
+
+  useEffect(() => {
+    fetch("/api/project-categories")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data && json.data.length > 0) {
+          setCategories(
+            json.data.map((c: any) => ({
+              value: c.slug,
+              label: c.name,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
 
   useEffect(() => {
     adminFetch(`/api/admin/projects/${params.id}`)
@@ -135,7 +152,7 @@ export default function EditProjectPage() {
               <Select value={form.category} onValueChange={(v) => setForm({...form, category: v ?? ""})}>
                 <SelectTrigger id="cat"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

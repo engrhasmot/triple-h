@@ -17,23 +17,55 @@ export default function PortfolioPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [categories, setCategories] = useState<{ name: string; slug: string; projectCount?: number }[]>([
+    { name: "All", slug: "All" },
+    { name: "2D Plans", slug: "2d-plan" },
+    { name: "3D Exterior", slug: "3d-exterior" },
+    { name: "3D Interior", slug: "3d-interior" },
+    { name: "Construction", slug: "construction" },
+  ]);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/project-categories");
+        const json = await res.json();
+        if (json.success && json.data && json.data.length > 0) {
+          setCategories([
+            { name: "All", slug: "All" },
+            ...json.data.map((c: any) => ({
+              name: c.name,
+              slug: c.slug,
+              projectCount: c.projectCount,
+            })),
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    };
+
     const fetchProjects = async () => {
       try {
         const res = await fetch("/api/projects");
         const json = await res.json();
         setProjects(json.data || []);
       } catch (err) {
-        console.error("Failed to load portfolio");
+        console.error("Failed to load portfolio:", err);
       } finally {
         setLoading(false);
       }
     };
+
+    fetchCategories();
     fetchProjects();
   }, []);
 
-  const categories = ["All", "2d-plan", "3d-exterior", "3d-interior", "construction"];
+  // Fast map for slug -> display name
+  const categoryMap: Record<string, string> = {};
+  categories.forEach((c) => {
+    if (c.slug !== "All") categoryMap[c.slug] = c.name;
+  });
 
   const filteredProjects = activeCategory === "All" 
     ? projects 
@@ -56,17 +88,28 @@ export default function PortfolioPage() {
       {/* Filter Pills */}
       <section className="py-8 border-b border-border sticky top-16 md:top-20 bg-background/90 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-3">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
-                activeCategory === cat 
+              key={cat.slug}
+              onClick={() => setActiveCategory(cat.slug)}
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 ${
+                activeCategory === cat.slug 
                 ? "bg-accent text-primary shadow-lg scale-105" 
                 : "bg-secondary text-foreground hover:bg-secondary/80"
               }`}
             >
-              {cat.replace('-', ' ').toUpperCase()}
+              <span>{cat.name}</span>
+              {cat.slug !== "All" && cat.projectCount !== undefined && cat.projectCount > 0 && (
+                <span
+                  className={`text-[11px] font-mono px-1.5 py-0.2 rounded-full ${
+                    activeCategory === cat.slug
+                      ? "bg-primary/20 text-primary font-bold"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {cat.projectCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -107,7 +150,7 @@ export default function PortfolioPage() {
                   </div>
                   <div className="p-5 bg-card">
                     <h3 className="font-bold text-lg text-foreground mb-1 font-heading">{project.title}</h3>
-                    <p className="text-sm text-accent uppercase tracking-wider font-semibold">{project.category.replace('-', ' ')}</p>
+                    <p className="text-sm text-accent uppercase tracking-wider font-semibold">{categoryMap[project.category] || project.category.replace('-', ' ')}</p>
                   </div>
                 </motion.div>
               ))}
@@ -208,7 +251,7 @@ export default function PortfolioPage() {
               <div className="w-full md:w-2/5 p-8 flex flex-col justify-between overflow-y-auto">
                 <div>
                   <h2 className="text-3xl font-bold font-heading text-foreground mb-2">{selectedProject.title}</h2>
-                  <p className="text-accent font-semibold uppercase tracking-wider text-sm mb-6">{selectedProject.category.replace('-', ' ')}</p>
+                  <p className="text-accent font-semibold uppercase tracking-wider text-sm mb-6">{categoryMap[selectedProject.category] || selectedProject.category.replace('-', ' ')}</p>
                   
                   <div className="space-y-4 mb-8">
                     {selectedProject.location && (
