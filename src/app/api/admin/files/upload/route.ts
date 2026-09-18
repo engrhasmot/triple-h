@@ -89,55 +89,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let fileUrl = "";
-    let publicId = "";
+    // Store PDF directly in MongoDB PlanDocumentFile.
+    // Note: Cloudinary by default strictly blocks public delivery of PDF files with HTTP 401 (deny or ACL failure).
+    // Storing directly in MongoDB guarantees 100% reliable PDF delivery on Vercel without third-party ACL blocks.
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_") || "drawing.pdf";
+    const docFile = await PlanDocumentFile.create({
+      planId: plan._id,
+      fileId: plan.fileId,
+      filename: cleanFileName,
+      contentType: "application/pdf",
+      sizeBytes: buffer.length,
+      data: buffer,
+    });
 
-    const hasCloudinary = Boolean(
-      process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
-    );
-
-    if (hasCloudinary) {
-      try {
-        const cleanBaseName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-        const cRes = await uploadBufferToCloudinary(
-          buffer,
-          "triple-h/plan-documents",
-          `${plan.fileId || "doc"}-${Date.now()}-${cleanBaseName}`
-        );
-        fileUrl = cRes.secure_url || cRes.url;
-        publicId = cRes.public_id;
-      } catch (cloudErr) {
-        console.warn("Cloudinary upload failed, falling back to database storage:", cloudErr);
-      }
-    }
-
-    // Database-backed storage (100% reliable on Vercel, Docker & Localhost)
-    if (!fileUrl) {
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_") || "drawing.pdf";
-      const docFile = await PlanDocumentFile.create({
-        planId: plan._id,
-        fileId: plan.fileId,
-        filename: cleanFileName,
-        contentType: "application/pdf",
-        sizeBytes: buffer.length,
-        data: buffer,
-      });
-
-      fileUrl = `/api/documents/${docFile._id}/${encodeURIComponent(cleanFileName)}`;
-      publicId = `db-${docFile._id}`;
-
-      // Optional local disk cache for dev mode
-      try {
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "plans");
-        await fs.mkdir(uploadDir, { recursive: true });
-        const safeFileName = `${plan.fileId || "plan"}-${Date.now()}-${cleanFileName}`;
-        await fs.writeFile(path.join(uploadDir, safeFileName), buffer);
-      } catch (_diskErr) {
-        // Safe to ignore on serverless/read-only filesystems
-      }
-    }
+    const fileUrl = `/api/documents/${docFile._id}/${encodeURIComponent(cleanFileName)}`;
+    const publicId = `db-${docFile._id}`;
 
     const docTitle = customName?.trim() || file.name.replace(/\.[^/.]+$/, "") || "Plan Document";
 
