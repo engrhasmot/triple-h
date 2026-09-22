@@ -26,14 +26,16 @@ import {
   PlusCircle,
   FileSpreadsheet,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  Save,
+  RotateCcw
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { adminFetch } from "@/lib/admin-fetch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -47,7 +49,7 @@ function formatBDT(amount: number) {
   return "৳" + Number(amount || 0).toLocaleString("en-IN");
 }
 
-// CSV Parser supporting quotes and commas
+// Robust CSV Parser supporting quotes and commas
 function parseCSV(text: string): string[][] {
   const lines: string[][] = [];
   let row: string[] = [];
@@ -103,7 +105,8 @@ interface ExcelRow {
 }
 
 export default function AdminExpensesPage() {
-  const [activeTab, setActiveTab] = useState<"transactions" | "categories" | "ledger">("transactions");
+  // Main view navigation: 'transactions' | 'excel' | 'single' | 'categories' | 'ledger'
+  const [activeView, setActiveView] = useState<"transactions" | "excel" | "single" | "categories" | "ledger">("transactions");
   const [expenses, setExpenses] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [projectLedger, setProjectLedger] = useState<any[]>([]);
@@ -125,18 +128,16 @@ export default function AdminExpensesPage() {
   const [monthFilter, setMonthFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
 
-  // Single Add / Edit Modal
-  const [modalOpen, setModalOpen] = useState(false);
+  // Single Form State
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingSingle, setSubmittingSingle] = useState(false);
 
-  // Excel Spreadsheet Modal
-  const [excelModalOpen, setExcelModalOpen] = useState(false);
+  // Excel Spreadsheet State
   const [excelRows, setExcelRows] = useState<ExcelRow[]>([]);
   const [savingExcel, setSavingExcel] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const initialFormState = {
+  const initialSingleFormState = {
     title: "",
     projectId: "general-office",
     projectName: "General / Office Overhead",
@@ -152,9 +153,9 @@ export default function AdminExpensesPage() {
     notes: "",
   };
 
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(initialSingleFormState);
 
-  // Available sub-categories based on selected category in form
+  // Available sub-categories based on selected category in single form
   const currentCategoryDef = useMemo(() => {
     return getCategoryDef(formData.category);
   }, [formData.category]);
@@ -188,21 +189,21 @@ export default function AdminExpensesPage() {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  // Open modal for single expense
+  // Open Full-Page Single Add Form
   const handleOpenAdd = () => {
     setEditingId(null);
     setFormData({
-      ...initialFormState,
+      ...initialSingleFormState,
       projectId: projectFilter !== "all" ? projectFilter : "general-office",
       projectName:
         projectFilter !== "all" && projectFilter !== "general-office"
           ? projects.find((p) => p._id === projectFilter)?.title || ""
           : "General / Office Overhead",
     });
-    setModalOpen(true);
+    setActiveView("single");
   };
 
-  // Open modal for editing
+  // Open Full-Page Single Edit Form
   const handleOpenEdit = (item: any) => {
     setEditingId(item._id);
     const cat = getCategoryDef(item.category);
@@ -223,10 +224,10 @@ export default function AdminExpensesPage() {
       attachmentUrl: item.attachmentUrl || "",
       notes: item.notes || "",
     });
-    setModalOpen(true);
+    setActiveView("single");
   };
 
-  const handleSaveExpense = async (e: React.FormEvent) => {
+  const handleSaveSingleExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.amount || Number(formData.amount) <= 0) {
       toast.error("Please enter a valid title and amount");
@@ -259,7 +260,7 @@ export default function AdminExpensesPage() {
       projectName: selectedProj ? selectedProj.title : "General / Office Overhead",
     };
 
-    setSubmitting(true);
+    setSubmittingSingle(true);
     try {
       const url = "/api/admin/expenses";
       const method = editingId ? "PUT" : "POST";
@@ -272,7 +273,7 @@ export default function AdminExpensesPage() {
       const data = await res.json();
       if (res.ok) {
         toast.success(editingId ? "Expense updated successfully!" : "Expense recorded successfully!");
-        setModalOpen(false);
+        setActiveView("transactions");
         fetchExpenses();
       } else {
         toast.error(data.error || "Failed to save expense");
@@ -280,7 +281,7 @@ export default function AdminExpensesPage() {
     } catch {
       toast.error("Network error while saving expense");
     } finally {
-      setSubmitting(false);
+      setSubmittingSingle(false);
     }
   };
 
@@ -302,7 +303,7 @@ export default function AdminExpensesPage() {
     }
   };
 
-  // ================= EXCEL SPREADSHEET SYSTEM =================
+  // ================= FULL-PAGE EXCEL SPREADSHEET SYSTEM =================
   const createEmptyRow = (defaultProjId?: string): ExcelRow => {
     const pId = defaultProjId || (projectFilter !== "all" ? projectFilter : "general-office");
     const pName =
@@ -326,11 +327,20 @@ export default function AdminExpensesPage() {
     };
   };
 
-  const handleOpenExcelModal = () => {
+  const handleOpenExcelView = () => {
     if (excelRows.length === 0) {
-      setExcelRows([createEmptyRow(), createEmptyRow(), createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+      setExcelRows([
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+        createEmptyRow(),
+      ]);
     }
-    setExcelModalOpen(true);
+    setActiveView("excel");
   };
 
   const addExcelRows = (count: number = 1) => {
@@ -408,7 +418,7 @@ export default function AdminExpensesPage() {
       const data = await res.json();
       if (res.ok) {
         toast.success(`🎉 Successfully saved ${data.count} expenses in bulk!`);
-        setExcelModalOpen(false);
+        setActiveView("transactions");
         setExcelRows([]);
         fetchExpenses();
       } else {
@@ -507,7 +517,6 @@ export default function AdminExpensesPage() {
           return;
         }
 
-        // Process rows (skip header if matches keywords)
         let startIndex = 0;
         const firstCol = rows[0][0]?.toLowerCase() || "";
         if (firstCol.includes("date") || firstCol.includes("তারিখ") || firstCol.includes("sl")) {
@@ -517,7 +526,7 @@ export default function AdminExpensesPage() {
         const newParsedRows: ExcelRow[] = [];
         for (let i = startIndex; i < rows.length; i++) {
           const r = rows[i];
-          if (r.length < 5) continue; // skip invalid line
+          if (r.length < 5) continue;
 
           const [
             dateVal,
@@ -534,7 +543,6 @@ export default function AdminExpensesPage() {
 
           if (!titleVal && !amountVal) continue;
 
-          // Find project if matching
           let matchedProjId = "general-office";
           let matchedProjName = projVal || "General / Office Overhead";
           const found = projects.find(
@@ -545,7 +553,6 @@ export default function AdminExpensesPage() {
             matchedProjName = found.title;
           }
 
-          // Category fallback
           const matchedCat = EXPENSE_CATEGORIES.some((c) => c.value === catVal)
             ? catVal
             : "civil-materials";
@@ -572,7 +579,7 @@ export default function AdminExpensesPage() {
         }
 
         setExcelRows(newParsedRows);
-        setExcelModalOpen(true);
+        setActiveView("excel");
         toast.success(`Loaded ${newParsedRows.length} rows from file into Excel Grid! Review and save.`);
       } catch (err) {
         toast.error("Failed to parse the file. Please use the sample CSV format.");
@@ -695,52 +702,41 @@ export default function AdminExpensesPage() {
             </select>
           </div>
 
-          {/* Excel Entry System Action Buttons */}
+          {/* Excel Full-Page Mode Button */}
           <Button
-            variant="default"
+            variant={activeView === "excel" ? "default" : "outline"}
             size="sm"
-            onClick={handleOpenExcelModal}
-            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
-            title="Open Excel Spreadsheet Grid Entry"
+            onClick={handleOpenExcelView}
+            className={`gap-1.5 text-xs font-bold ${
+              activeView === "excel"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "border-emerald-600/40 text-emerald-700 hover:bg-emerald-50"
+            }`}
           >
-            <Table className="w-4 h-4" /> Excel Quick Entry
+            <Table className="w-4 h-4" /> Excel Sheet Entry
           </Button>
 
+          {/* Single Full-Page Entry Button */}
           <Button
-            variant="outline"
+            variant={activeView === "single" ? "default" : "outline"}
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="gap-1.5 text-xs font-semibold"
-            title="Import from Excel CSV File"
+            onClick={handleOpenAdd}
+            className="gap-1.5 text-xs font-bold"
           >
-            <Upload className="w-4 h-4 text-accent" /> Import CSV
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={downloadSampleCSV}
-            className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-            title="Download blank sample Excel template"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Sample CSV
+            <Plus className="w-4 h-4" /> Single Entry
           </Button>
 
           <Button variant="outline" size="sm" onClick={downloadCSV} className="gap-1 text-xs">
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> CSV
           </Button>
 
           <Button variant="outline" size="sm" onClick={printStatement} className="gap-1 text-xs">
             <Printer className="w-4 h-4" /> Print
           </Button>
-
-          <Button onClick={handleOpenAdd} className="gap-1.5 font-bold bg-accent hover:bg-accent/90 text-xs sm:text-sm">
-            <Plus className="w-4 h-4" /> Single Entry
-          </Button>
         </div>
       </div>
 
-      {/* KPI Financial Overview Cards */}
+      {/* KPI Financial Overview Cards (always visible for context) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Outflow */}
         <Card className="border-rose-500/20 bg-rose-500/5">
@@ -805,12 +801,12 @@ export default function AdminExpensesPage() {
         </Card>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex border-b border-border gap-2">
+      {/* Main Full-Page View Tabs Bar */}
+      <div className="flex flex-wrap border-b border-border gap-2">
         <button
-          onClick={() => setActiveTab("transactions")}
+          onClick={() => setActiveView("transactions")}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === "transactions"
+            activeView === "transactions"
               ? "border-accent text-accent"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
@@ -820,9 +816,33 @@ export default function AdminExpensesPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("categories")}
+          onClick={handleOpenExcelView}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === "categories"
+            activeView === "excel"
+              ? "border-emerald-600 text-emerald-600"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Table className="w-4 h-4 text-emerald-600" />
+          Excel Sheet Entry (Full Page)
+        </button>
+
+        <button
+          onClick={handleOpenAdd}
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+            activeView === "single"
+              ? "border-accent text-accent"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Plus className="w-4 h-4" />
+          {editingId ? "Edit Expense (Full Page)" : "Single Entry (Full Page)"}
+        </button>
+
+        <button
+          onClick={() => setActiveView("categories")}
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+            activeView === "categories"
               ? "border-accent text-accent"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
@@ -832,9 +852,9 @@ export default function AdminExpensesPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("ledger")}
+          onClick={() => setActiveView("ledger")}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === "ledger"
+            activeView === "ledger"
               ? "border-accent text-accent"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
@@ -844,11 +864,579 @@ export default function AdminExpensesPage() {
         </button>
       </div>
 
-      {/* TAB 1: Cost Transactions */}
-      {activeTab === "transactions" && (
+      {/* ================= VIEW 1: FULL-PAGE EXCEL SPREADSHEET BATCH ENTRY ================= */}
+      {activeView === "excel" && (
+        <div className="space-y-4">
+          <Card className="border-emerald-500/30 shadow-md">
+            <CardHeader className="pb-3 border-b bg-card">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Table className="w-6 h-6 text-emerald-600" />
+                    <CardTitle className="text-xl font-bold">
+                      Excel Spreadsheet Batch Data Entry (ফুল পেজ এক্সেল শিট এন্ট্রি)
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-xs mt-1">
+                    এক্সেল শিটের মতো পাশাপাশি ঘরে দ্রুত টাইপ করুন, একের পর এক সারি যোগ করুন অথবা CSV ফাইল ইমপোর্ট করে এক ক্লিকে সেভ করুন।
+                  </CardDescription>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadSampleCSV}
+                    className="gap-1.5 text-xs text-emerald-700 hover:text-emerald-800"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Sample Template
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Import CSV File
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => addExcelRows(1)}
+                    className="gap-1 text-xs font-semibold"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> +1 Row
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => addExcelRows(5)}
+                    className="gap-1 text-xs font-semibold"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" /> +5 Rows
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveView("transactions")}
+                    className="gap-1 text-xs"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to List
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              {/* Full Page Excel Table */}
+              <div className="overflow-x-auto min-h-[450px] max-h-[65vh]">
+                <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
+                  <thead className="bg-muted sticky top-0 z-10 border-b font-bold text-foreground text-[11px] uppercase shadow-sm">
+                    <tr>
+                      <th className="py-3 px-2 w-10 text-center">#</th>
+                      <th className="py-3 px-2 w-32">Date *</th>
+                      <th className="py-3 px-2 w-48">Project *</th>
+                      <th className="py-3 px-2 w-44">Category *</th>
+                      <th className="py-3 px-2 w-48">Sub-Category</th>
+                      <th className="py-3 px-2 min-w-[220px]">Title / Item Description *</th>
+                      <th className="py-3 px-2 w-32 text-right">Amount (৳) *</th>
+                      <th className="py-3 px-2 w-36">Paid To (Vendor)</th>
+                      <th className="py-3 px-2 w-28">Method</th>
+                      <th className="py-3 px-2 w-28">Voucher #</th>
+                      <th className="py-3 px-2 w-40">Notes</th>
+                      <th className="py-3 px-2 w-16 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {excelRows.map((row, idx) => {
+                      const catDef = getCategoryDef(row.category);
+                      const isFilled = row.title.trim() !== "" && Number(row.amount) > 0;
+                      return (
+                        <tr
+                          key={row.id}
+                          className={`hover:bg-muted/20 transition-colors ${
+                            isFilled ? "bg-emerald-500/[0.03]" : ""
+                          }`}
+                        >
+                          {/* Row Index */}
+                          <td className="py-2 px-2 text-center text-[11px] text-muted-foreground font-mono">
+                            {idx + 1}
+                          </td>
+
+                          {/* Date */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="date"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                              value={row.date}
+                              onChange={(e) => updateExcelRow(row.id, "date", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Project */}
+                          <td className="py-1.5 px-1">
+                            <select
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
+                              value={row.projectId}
+                              onChange={(e) => updateExcelRow(row.id, "projectId", e.target.value)}
+                            >
+                              <option value="general-office">🏢 General Office</option>
+                              {projects.map((p) => (
+                                <option key={p._id} value={p._id}>
+                                  📍 {p.title}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* Category */}
+                          <td className="py-1.5 px-1">
+                            <select
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
+                              value={row.category}
+                              onChange={(e) => updateExcelRow(row.id, "category", e.target.value)}
+                            >
+                              {EXPENSE_CATEGORIES.map((c) => (
+                                <option key={c.value} value={c.value}>
+                                  {c.label} ({c.labelBn})
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* Sub-Category */}
+                          <td className="py-1.5 px-1">
+                            <select
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate"
+                              value={row.subCategory}
+                              onChange={(e) => updateExcelRow(row.id, "subCategory", e.target.value)}
+                            >
+                              <option value="">-- Sub Category --</option>
+                              {catDef?.subCategories.map((s) => (
+                                <option key={s.value} value={s.value}>
+                                  {s.labelBn} / {s.label}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* Title / Description */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="text"
+                              placeholder="e.g. 5 Ton BSRM 16mm Rod"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent font-medium"
+                              value={row.title}
+                              onChange={(e) => updateExcelRow(row.id, "title", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Amount */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="number"
+                              placeholder="0"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs text-right font-bold text-rose-600 focus:ring-1 focus:ring-accent"
+                              value={row.amount}
+                              onChange={(e) => updateExcelRow(row.id, "amount", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Paid To */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="text"
+                              placeholder="Vendor / Mistri"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                              value={row.paidTo}
+                              onChange={(e) => updateExcelRow(row.id, "paidTo", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Method */}
+                          <td className="py-1.5 px-1">
+                            <select
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                              value={row.paymentMethod}
+                              onChange={(e) => updateExcelRow(row.id, "paymentMethod", e.target.value)}
+                            >
+                              <option value="cash">Cash</option>
+                              <option value="bank">Bank</option>
+                              <option value="bkash">bKash</option>
+                              <option value="nagad">Nagad</option>
+                              <option value="cheque">Cheque</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </td>
+
+                          {/* Voucher # */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="text"
+                              placeholder="INV-102"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs font-mono focus:ring-1 focus:ring-accent"
+                              value={row.voucherNo}
+                              onChange={(e) => updateExcelRow(row.id, "voucherNo", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Notes */}
+                          <td className="py-1.5 px-1">
+                            <input
+                              type="text"
+                              placeholder="Remarks..."
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                              value={row.notes}
+                              onChange={(e) => updateExcelRow(row.id, "notes", e.target.value)}
+                            />
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-1.5 px-1 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => duplicateExcelRow(idx)}
+                                className="p-1.5 text-muted-foreground hover:text-accent rounded hover:bg-muted"
+                                title="Duplicate Row"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteExcelRow(row.id)}
+                                className="p-1.5 text-muted-foreground hover:text-destructive rounded hover:bg-destructive/10"
+                                title="Delete Row"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Sticky Action Bar */}
+              <div className="p-4 bg-muted/40 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4 text-xs">
+                  <span className="font-semibold text-muted-foreground">
+                    Total Rows: <span className="font-mono text-foreground font-bold">{excelRows.length}</span>
+                  </span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Valid Entries: <span className="font-mono font-black">{excelCalculatedStats.count}</span>
+                  </span>
+                  <span className="font-semibold text-rose-600">
+                    Total Sum: <span className="font-mono font-black text-sm">{formatBDT(excelCalculatedStats.sum)}</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveView("transactions")}
+                    className="flex-1 sm:flex-initial text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveExcelBatch}
+                    disabled={savingExcel || excelCalculatedStats.count === 0}
+                    className="flex-1 sm:flex-initial font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow"
+                  >
+                    {savingExcel ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Save {excelCalculatedStats.count} Records to Database
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ================= VIEW 2: FULL-PAGE SINGLE EXPENSE ENTRY FORM ================= */}
+      {activeView === "single" && (
+        <div className="space-y-4">
+          <Card className="shadow-md border-border">
+            <CardHeader className="border-b pb-4 bg-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-accent/10 rounded-lg text-accent">
+                    <Receipt className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold">
+                      {editingId ? "Edit Expense Record (খরচ সম্পাদনা)" : "Record New Project Cost (নতুন খরচ এন্ট্রি)"}
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      প্রজেক্ট, ক্যাটাগরি, সাব-ক্যাটাগরি, মালামালের বিস্তারিত এবং বিল ভাউচার এন্ট্রি দিন।
+                    </CardDescription>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveView("transactions")}
+                  className="gap-1.5 text-xs w-fit"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Transactions
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-6">
+              <form onSubmit={handleSaveSingleExpense} className="space-y-6 max-w-4xl mx-auto">
+                {/* Section 1: Project & Hierarchy */}
+                <div className="space-y-4 border-b pb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-accent" /> ১. প্রজেক্ট ও ক্যাটাগরি নির্বাচন
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Project */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Select Project *</Label>
+                      <select
+                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm font-semibold"
+                        value={formData.projectId}
+                        onChange={(e) => {
+                          const pId = e.target.value;
+                          const p = projects.find((proj) => proj._id === pId);
+                          setFormData((prev) => ({
+                            ...prev,
+                            projectId: pId,
+                            projectName: p ? p.title : "General / Office Overhead",
+                          }));
+                        }}
+                      >
+                        <option value="general-office">🏢 General / Office Overhead</option>
+                        <optgroup label="Active Projects">
+                          {projects.map((p) => (
+                            <option key={p._id} value={p._id}>
+                              📍 {p.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Main Category */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Main Category *</Label>
+                      <select
+                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                        value={formData.category}
+                        onChange={(e) => {
+                          const newCat = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: newCat,
+                            subCategory: "",
+                            customSubCategory: "",
+                          }));
+                        }}
+                      >
+                        {EXPENSE_CATEGORIES.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label} ({c.labelBn})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Sub-Category */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Sub-Category (সেকশন)</Label>
+                      <select
+                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                        value={formData.subCategory}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, subCategory: e.target.value }))}
+                      >
+                        <option value="">-- Select Sub-category --</option>
+                        {currentCategoryDef?.subCategories.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.labelBn} / {s.label}
+                          </option>
+                        ))}
+                        <option value="custom">✍️ Custom Sub-category (অন্যান্য)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Custom Sub-Category input if "custom" selected */}
+                  {formData.subCategory === "custom" && (
+                    <div className="space-y-1.5 pt-1">
+                      <Label className="text-xs text-muted-foreground font-semibold">
+                        Custom Sub-Category Name (নিজস্ব উপ-বিভাগের নাম)
+                      </Label>
+                      <Input
+                        value={formData.customSubCategory}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, customSubCategory: e.target.value }))}
+                        placeholder="e.g. BSRM 16mm Rod / Special Polish"
+                        className="max-w-md"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 2: Expense Details */}
+                <div className="space-y-4 border-b pb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Receipt className="w-4 h-4 text-accent" /> ২. খরচের বিবরণ ও টাকার পরিমাণ
+                  </h3>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">
+                      Expense Title / Item Description * (খরচের বিবরণ)
+                    </Label>
+                    <Input
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. 5 Ton BSRM 16mm Rod for Grade Beam Casting"
+                      className="text-sm font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Amount (BDT ৳) * (টাকা)</Label>
+                      <Input
+                        required
+                        type="number"
+                        min="1"
+                        value={formData.amount}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                        placeholder="85000"
+                        className="font-black text-rose-600 text-base"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Date of Expense (তারিখ)</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Vendor & Payment */}
+                <div className="space-y-4 border-b pb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Wallet className="w-4 h-4 text-accent" /> ৩. প্রাপক ও পেমেন্ট মাধ্যম
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Paid To (Vendor / Contractor)</Label>
+                      <Input
+                        value={formData.paidTo}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, paidTo: e.target.value }))}
+                        placeholder="e.g. Anwar Steel / Karim Mistri"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Payment Method</Label>
+                      <select
+                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                        value={formData.paymentMethod}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                      >
+                        <option value="cash">Cash (নগদ টাকা)</option>
+                        <option value="bank">Bank Transfer / Cheque (ব্যাংক/চেক)</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Voucher / Memo No (ভাউচার নং)</Label>
+                      <Input
+                        value={formData.voucherNo}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, voucherNo: e.target.value }))}
+                        placeholder="e.g. MEMO-8841"
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">
+                        Receipt / Voucher Document URL (রসিদের লিংক)
+                      </Label>
+                      <Input
+                        value={formData.attachmentUrl}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, attachmentUrl: e.target.value }))}
+                        placeholder="https://... image or pdf link"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Notes */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-foreground">Notes & Remarks (মন্তব্য)</Label>
+                  <Input
+                    value={formData.notes}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Extra details about supplier, delivery challan, or site supervisor remarks"
+                  />
+                </div>
+
+                {/* Submit & Cancel Buttons */}
+                <div className="flex items-center gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveView("transactions")}
+                    className="flex-1 text-sm font-semibold"
+                  >
+                    Cancel / Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={submittingSingle}
+                    className="flex-1 font-bold bg-accent hover:bg-accent/90 text-sm gap-2"
+                  >
+                    {submittingSingle ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {editingId ? "Update Expense Record" : "Save Expense Record"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ================= VIEW 3: COST TRANSACTIONS TABLE ================= */}
+      {activeView === "transactions" && (
         <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 bg-card rounded-xl border border-border">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 bg-card rounded-xl border border-border shadow-sm">
             {/* Search */}
             <div className="relative lg:col-span-2">
               <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
@@ -937,11 +1525,11 @@ export default function AdminExpensesPage() {
                   <Receipt className="w-12 h-12 text-muted-foreground/40 mx-auto" />
                   <p className="font-bold text-base">No expense records found</p>
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Try changing your search or filter options, or click "Excel Quick Entry" to enter multiple records fast.
+                    Try changing your search or filter options, or click "Excel Sheet Entry" to enter multiple records fast.
                   </p>
                   <div className="flex justify-center gap-2 pt-1">
-                    <Button onClick={handleOpenExcelModal} size="sm" className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
-                      <Table className="w-4 h-4 mr-1" /> Excel Quick Entry
+                    <Button onClick={handleOpenExcelView} size="sm" className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Table className="w-4 h-4 mr-1" /> Excel Sheet Entry
                     </Button>
                     <Button onClick={handleOpenAdd} size="sm" variant="outline">
                       <Plus className="w-4 h-4 mr-1" /> Single Entry
@@ -1044,7 +1632,7 @@ export default function AdminExpensesPage() {
                                   size="icon"
                                   className="h-8 w-8 text-muted-foreground hover:text-accent hover:bg-accent/10"
                                   onClick={() => handleOpenEdit(expense)}
-                                  title="Edit Expense"
+                                  title="Edit Expense (Full Page)"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </Button>
@@ -1071,8 +1659,8 @@ export default function AdminExpensesPage() {
         </div>
       )}
 
-      {/* TAB 2: Category Breakdown Analytics */}
-      {activeTab === "categories" && (
+      {/* ================= VIEW 4: CATEGORY BREAKDOWN ANALYTICS ================= */}
+      {activeView === "categories" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -1103,7 +1691,7 @@ export default function AdminExpensesPage() {
                   }`}
                   onClick={() => {
                     setCategoryFilter(cat.value);
-                    setActiveTab("transactions");
+                    setActiveView("transactions");
                   }}
                 >
                   <div className="p-4 space-y-3">
@@ -1143,8 +1731,8 @@ export default function AdminExpensesPage() {
         </div>
       )}
 
-      {/* TAB 3: Project Accounts Ledger */}
-      {activeTab === "ledger" && (
+      {/* ================= VIEW 5: PROJECT ACCOUNTS LEDGER ================= */}
+      {activeView === "ledger" && (
         <div className="space-y-6">
           <div>
             <h2 className="text-lg font-bold text-foreground">Project-wise Accounts & Profit Margin Ledger</h2>
@@ -1227,7 +1815,7 @@ export default function AdminExpensesPage() {
                                 className="text-xs h-7 gap-1"
                                 onClick={() => {
                                   setProjectFilter(proj.projectId);
-                                  setActiveTab("transactions");
+                                  setActiveView("transactions");
                                 }}
                               >
                                 View Costs <ArrowRight className="w-3 h-3" />
@@ -1244,496 +1832,6 @@ export default function AdminExpensesPage() {
           </div>
         </div>
       )}
-
-      {/* ================= MODAL 1: EXCEL SPREADSHEET BATCH ENTRY & IMPORT ================= */}
-      <Dialog open={excelModalOpen} onOpenChange={setExcelModalOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[92vh] flex flex-col p-6">
-          <DialogHeader className="pb-3 border-b">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Table className="w-6 h-6 text-emerald-600" />
-                  Excel Spreadsheet Batch Data Entry (এক্সেল শিট এন্ট্রি সিস্টেম)
-                </DialogTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  এক্সেল ফাইলের মতো একসাথে একাধিক সারি (Rows) এন্ট্রি দিন বা CSV ফাইল আপলোড করে এক ক্লিকে সেভ করুন।
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={downloadSampleCSV}
-                  className="gap-1 text-xs text-emerald-700 hover:text-emerald-800"
-                >
-                  <Download className="w-3.5 h-3.5" /> Sample Template
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-1 text-xs"
-                >
-                  <Upload className="w-3.5 h-3.5" /> Import CSV File
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => addExcelRows(1)}
-                  className="gap-1 text-xs font-semibold"
-                >
-                  <Plus className="w-3.5 h-3.5" /> +1 Row
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => addExcelRows(5)}
-                  className="gap-1 text-xs font-semibold"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" /> +5 Rows
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {/* Excel Grid Table Body */}
-          <div className="flex-1 overflow-auto border rounded-lg mt-3">
-            <table className="w-full text-left text-xs border-collapse min-w-[1250px]">
-              <thead className="bg-muted/80 sticky top-0 z-10 border-b font-bold text-foreground text-[11px] uppercase shadow-sm">
-                <tr>
-                  <th className="py-2.5 px-2 w-10 text-center">#</th>
-                  <th className="py-2.5 px-2 w-32">Date *</th>
-                  <th className="py-2.5 px-2 w-44">Project *</th>
-                  <th className="py-2.5 px-2 w-40">Category *</th>
-                  <th className="py-2.5 px-2 w-44">Sub-Category</th>
-                  <th className="py-2.5 px-2 min-w-[200px]">Title / Item Description *</th>
-                  <th className="py-2.5 px-2 w-32 text-right">Amount (৳) *</th>
-                  <th className="py-2.5 px-2 w-36">Paid To (Vendor)</th>
-                  <th className="py-2.5 px-2 w-28">Method</th>
-                  <th className="py-2.5 px-2 w-28">Voucher #</th>
-                  <th className="py-2.5 px-2 w-40">Notes</th>
-                  <th className="py-2.5 px-2 w-16 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {excelRows.map((row, idx) => {
-                  const catDef = getCategoryDef(row.category);
-                  const isFilled = row.title.trim() !== "" && Number(row.amount) > 0;
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`hover:bg-muted/20 transition-colors ${
-                        isFilled ? "bg-emerald-500/[0.02]" : ""
-                      }`}
-                    >
-                      {/* Row Index */}
-                      <td className="py-1.5 px-2 text-center text-[11px] text-muted-foreground font-mono">
-                        {idx + 1}
-                      </td>
-
-                      {/* Date */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="date"
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
-                          value={row.date}
-                          onChange={(e) => updateExcelRow(row.id, "date", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Project */}
-                      <td className="py-1 px-1">
-                        <select
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
-                          value={row.projectId}
-                          onChange={(e) => updateExcelRow(row.id, "projectId", e.target.value)}
-                        >
-                          <option value="general-office">🏢 General Office</option>
-                          {projects.map((p) => (
-                            <option key={p._id} value={p._id}>
-                              📍 {p.title}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Category */}
-                      <td className="py-1 px-1">
-                        <select
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
-                          value={row.category}
-                          onChange={(e) => updateExcelRow(row.id, "category", e.target.value)}
-                        >
-                          {EXPENSE_CATEGORIES.map((c) => (
-                            <option key={c.value} value={c.value}>
-                              {c.label} ({c.labelBn})
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Sub-Category */}
-                      <td className="py-1 px-1">
-                        <select
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate"
-                          value={row.subCategory}
-                          onChange={(e) => updateExcelRow(row.id, "subCategory", e.target.value)}
-                        >
-                          <option value="">-- Sub Category --</option>
-                          {catDef?.subCategories.map((s) => (
-                            <option key={s.value} value={s.value}>
-                              {s.labelBn} / {s.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Title / Description */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="text"
-                          placeholder="e.g. 5 Ton BSRM 16mm Rod"
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent font-medium"
-                          value={row.title}
-                          onChange={(e) => updateExcelRow(row.id, "title", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Amount */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="number"
-                          placeholder="0"
-                          className="w-full px-2 py-1 bg-background border rounded text-xs text-right font-bold text-rose-600 focus:ring-1 focus:ring-accent"
-                          value={row.amount}
-                          onChange={(e) => updateExcelRow(row.id, "amount", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Paid To */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="text"
-                          placeholder="Vendor / Mistri"
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
-                          value={row.paidTo}
-                          onChange={(e) => updateExcelRow(row.id, "paidTo", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Method */}
-                      <td className="py-1 px-1">
-                        <select
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
-                          value={row.paymentMethod}
-                          onChange={(e) => updateExcelRow(row.id, "paymentMethod", e.target.value)}
-                        >
-                          <option value="cash">Cash</option>
-                          <option value="bank">Bank</option>
-                          <option value="bkash">bKash</option>
-                          <option value="nagad">Nagad</option>
-                          <option value="cheque">Cheque</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </td>
-
-                      {/* Voucher # */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="text"
-                          placeholder="INV-102"
-                          className="w-full px-2 py-1 bg-background border rounded text-xs font-mono focus:ring-1 focus:ring-accent"
-                          value={row.voucherNo}
-                          onChange={(e) => updateExcelRow(row.id, "voucherNo", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Notes */}
-                      <td className="py-1 px-1">
-                        <input
-                          type="text"
-                          placeholder="Remarks..."
-                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
-                          value={row.notes}
-                          onChange={(e) => updateExcelRow(row.id, "notes", e.target.value)}
-                        />
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-1 px-1 text-center whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => duplicateExcelRow(idx)}
-                            className="p-1 text-muted-foreground hover:text-accent rounded hover:bg-muted"
-                            title="Duplicate Row"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteExcelRow(row.id)}
-                            className="p-1 text-muted-foreground hover:text-destructive rounded hover:bg-destructive/10"
-                            title="Delete Row"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Modal Footer with Summary & Save */}
-          <div className="pt-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 mt-2">
-            <div className="flex items-center gap-4 text-xs">
-              <span className="font-semibold text-muted-foreground">
-                Total Rows: <span className="font-mono text-foreground font-bold">{excelRows.length}</span>
-              </span>
-              <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Valid Entries: <span className="font-mono font-black">{excelCalculatedStats.count}</span>
-              </span>
-              <span className="font-semibold text-rose-600">
-                Sum Amount: <span className="font-mono font-black text-sm">{formatBDT(excelCalculatedStats.sum)}</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setExcelModalOpen(false)}
-                className="flex-1 sm:flex-initial text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSaveExcelBatch}
-                disabled={savingExcel || excelCalculatedStats.count === 0}
-                className="flex-1 sm:flex-initial font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow"
-              >
-                {savingExcel ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Saving Entries...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" /> Save {excelCalculatedStats.count} Records to Database
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ================= MODAL 2: SINGLE ADD / EDIT EXPENSE DIALOG ================= */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-accent" />
-              {editingId ? "Edit Expense Record" : "Record New Project Cost / Expense"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveExpense} className="space-y-4 mt-2">
-            {/* Project Selection */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-muted-foreground">Select Project *</Label>
-              <select
-                className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm font-semibold"
-                value={formData.projectId}
-                onChange={(e) => {
-                  const pId = e.target.value;
-                  const p = projects.find((proj) => proj._id === pId);
-                  setFormData((prev) => ({
-                    ...prev,
-                    projectId: pId,
-                    projectName: p ? p.title : "General / Office Overhead",
-                  }));
-                }}
-              >
-                <option value="general-office">🏢 General / Office Overhead</option>
-                <optgroup label="Active Projects">
-                  {projects.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      📍 {p.title}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-
-            {/* Category & Sub-Category */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Main Category *</Label>
-                <select
-                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
-                  value={formData.category}
-                  onChange={(e) => {
-                    const newCat = e.target.value;
-                    setFormData((prev) => ({
-                      ...prev,
-                      category: newCat,
-                      subCategory: "",
-                      customSubCategory: "",
-                    }));
-                  }}
-                >
-                  {EXPENSE_CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label} ({c.labelBn})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Sub-Category (সেকশন)</Label>
-                <select
-                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
-                  value={formData.subCategory}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, subCategory: e.target.value }))}
-                >
-                  <option value="">-- Select Sub-category --</option>
-                  {currentCategoryDef?.subCategories.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.labelBn} / {s.label}
-                    </option>
-                  ))}
-                  <option value="custom">✍️ Custom Sub-category (অন্যান্য)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Custom Sub-Category input if "custom" selected */}
-            {formData.subCategory === "custom" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Custom Sub-Category Name</Label>
-                <Input
-                  value={formData.customSubCategory}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, customSubCategory: e.target.value }))}
-                  placeholder="e.g. BSRM 16mm Rod / Special Polish"
-                />
-              </div>
-            )}
-
-            {/* Title / Description */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-muted-foreground">Expense Title / Item Description *</Label>
-              <Input
-                required
-                value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="e.g. 5 Ton BSRM 16mm Rod for Grade Beam Casting"
-              />
-            </div>
-
-            {/* Amount & Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Amount (BDT ৳) *</Label>
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  value={formData.amount}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
-                  placeholder="85000"
-                  className="font-bold text-rose-600"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Date of Expense</Label>
-                <Input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            {/* Paid To & Payment Method */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Paid To (Vendor / Contractor)</Label>
-                <Input
-                  value={formData.paidTo}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, paidTo: e.target.value }))}
-                  placeholder="e.g. Anwar Steel / Karim Mistri"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Payment Method</Label>
-                <select
-                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))}
-                >
-                  <option value="cash">Cash (নগদ টাকা)</option>
-                  <option value="bank">Bank Transfer / Cheque (ব্যাংক/চেক)</option>
-                  <option value="bkash">bKash</option>
-                  <option value="nagad">Nagad</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Voucher No & Attachment URL */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Voucher / Memo No</Label>
-                <Input
-                  value={formData.voucherNo}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, voucherNo: e.target.value }))}
-                  placeholder="e.g. MEMO-8841"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">Receipt / Voucher Link (URL)</Label>
-                <Input
-                  value={formData.attachmentUrl}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, attachmentUrl: e.target.value }))}
-                  placeholder="https://... image or pdf link"
-                />
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-muted-foreground">Notes & Remarks</Label>
-              <Input
-                value={formData.notes}
-                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="Extra details about supplier, quality, or site supervisor remarks"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-3">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting} className="flex-1 font-bold bg-accent hover:bg-accent/90">
-                {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingId ? "Update Expense" : "Save Expense"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
