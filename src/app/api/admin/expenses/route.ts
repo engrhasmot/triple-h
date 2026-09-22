@@ -416,6 +416,47 @@ export async function DELETE(req: NextRequest) {
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const deleteAll = searchParams.get("deleteAll") === "true";
+    const projectId = searchParams.get("projectId");
+
+    // Support Bulk Delete All Records (Requires project scope or all)
+    if (deleteAll) {
+      let query: Record<string, any> = {};
+      let targetDesc = "All expenses (Global)";
+
+      if (projectId && projectId !== "all") {
+        if (projectId === "general-office") {
+          query = {
+            $or: [
+              { projectId: null },
+              { projectId: { $exists: false } },
+              { projectName: "General / Office Overhead" },
+            ],
+          };
+          targetDesc = "General / Office Overhead expenses";
+        } else if (mongoose.Types.ObjectId.isValid(projectId)) {
+          query = { projectId: new mongoose.Types.ObjectId(projectId) };
+          targetDesc = `Expenses for Project ID: ${projectId}`;
+        }
+      }
+
+      const result = await Expense.deleteMany(query);
+
+      try {
+        await ActivityLog.create({
+          action: "DELETE",
+          resource: "Expense",
+          performedBy: (payload as any).email || "admin",
+          details: `Bulk deleted ${result.deletedCount} records for ${targetDesc}`,
+        });
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        count: result.deletedCount,
+        message: `Successfully deleted ${result.deletedCount} expense records`,
+      });
+    }
 
     if (!id) return NextResponse.json({ error: "Expense ID is required" }, { status: 400 });
 

@@ -9,33 +9,38 @@ import {
   Calendar, 
   Plus, 
   Trash2, 
-  Edit3,
+  Edit3, 
   Download, 
   Search, 
   Loader2, 
-  Building2,
-  PieChart,
-  Layers,
-  ArrowRight,
-  ExternalLink,
-  Printer,
-  FileCheck2,
-  Table,
-  Upload,
-  Copy,
-  PlusCircle,
-  FileSpreadsheet,
-  CheckCircle2,
-  AlertCircle,
-  ArrowLeft,
-  Save,
-  RotateCcw
+  Building2, 
+  PieChart, 
+  Layers, 
+  ArrowRight, 
+  ExternalLink, 
+  Printer, 
+  FileCheck2, 
+  Table, 
+  Upload, 
+  Copy, 
+  PlusCircle, 
+  FileSpreadsheet, 
+  CheckCircle2, 
+  AlertCircle, 
+  ArrowLeft, 
+  Save, 
+  RotateCcw,
+  ShieldAlert,
+  AlertTriangle,
+  KeyRound,
+  Check
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { adminFetch } from "@/lib/admin-fetch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -128,6 +133,16 @@ export default function AdminExpensesPage() {
   const [monthFilter, setMonthFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
 
+  // Mandatory Pre-Entry Project Selection Modal
+  const [projectSelectModalOpen, setProjectSelectModalOpen] = useState(false);
+  const [targetEntryMode, setTargetEntryMode] = useState<"excel" | "single">("excel");
+
+  // Delete All Records Security Confirmation Modal
+  const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+  const [confirmSecurityCode, setConfirmSecurityCode] = useState("");
+  const [userEnteredCode, setUserEnteredCode] = useState("");
+  const [deletingAll, setDeletingAll] = useState(false);
+
   // Single Form State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submittingSingle, setSubmittingSingle] = useState(false);
@@ -189,18 +204,71 @@ export default function AdminExpensesPage() {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  // Open Full-Page Single Add Form
-  const handleOpenAdd = () => {
-    setEditingId(null);
-    setFormData({
-      ...initialSingleFormState,
-      projectId: projectFilter !== "all" ? projectFilter : "general-office",
-      projectName:
-        projectFilter !== "all" && projectFilter !== "general-office"
-          ? projects.find((p) => p._id === projectFilter)?.title || ""
-          : "General / Office Overhead",
-    });
-    setActiveView("single");
+  // Helper to get selected project details
+  const activeProjectInfo = useMemo(() => {
+    if (projectFilter === "all") return null;
+    if (projectFilter === "general-office") {
+      return { id: "general-office", title: "General / Office Overhead", location: "Head Office" };
+    }
+    const p = projects.find((proj) => proj._id === projectFilter);
+    return p ? { id: p._id, title: p.title, location: p.location } : null;
+  }, [projectFilter, projects]);
+
+  // MANDATORY PROJECT SELECTION HANDLER BEFORE ENTRY
+  const handleInitiateEntry = (mode: "excel" | "single") => {
+    if (projectFilter === "all") {
+      // Must select project first!
+      setTargetEntryMode(mode);
+      setProjectSelectModalOpen(true);
+    } else {
+      // Already selected, proceed directly with auto-fill
+      proceedToEntry(mode, projectFilter);
+    }
+  };
+
+  const proceedToEntry = (mode: "excel" | "single", pId: string) => {
+    setProjectFilter(pId);
+    setProjectSelectModalOpen(false);
+
+    let pName = "General / Office Overhead";
+    if (pId !== "general-office") {
+      const p = projects.find((proj) => proj._id === pId);
+      if (p) pName = p.title;
+    }
+
+    if (mode === "excel") {
+      // Auto-fill all rows with this chosen project
+      const newRows: ExcelRow[] = [];
+      for (let i = 0; i < 8; i++) {
+        newRows.push({
+          id: Math.random().toString(36).substring(2, 9),
+          date: new Date().toISOString().split("T")[0],
+          projectId: pId,
+          projectName: pName,
+          category: "civil-materials",
+          subCategory: "",
+          title: "",
+          amount: "",
+          paidTo: "",
+          paymentMethod: "cash",
+          voucherNo: "",
+          notes: "",
+        });
+      }
+      setExcelRows(newRows);
+      setActiveView("excel");
+      toast.info(`Auto-filled all rows for project: "${pName}"`);
+    } else {
+      // Auto-fill single form with this chosen project
+      setEditingId(null);
+      setFormData({
+        ...initialSingleFormState,
+        projectId: pId,
+        projectName: pName,
+      });
+      setActiveView("single");
+      toast.info(`Project auto-selected: "${pName}"`);
+    }
   };
 
   // Open Full-Page Single Edit Form
@@ -303,51 +371,65 @@ export default function AdminExpensesPage() {
     }
   };
 
-  // ================= FULL-PAGE EXCEL SPREADSHEET SYSTEM =================
-  const createEmptyRow = (defaultProjId?: string): ExcelRow => {
-    const pId = defaultProjId || (projectFilter !== "all" ? projectFilter : "general-office");
-    const pName =
-      pId !== "general-office"
-        ? projects.find((p) => p._id === pId)?.title || "Project"
+  // ================= DELETE ALL RECORDS WITH CONFIRMATION CODE =================
+  const handleOpenDeleteAllModal = () => {
+    const randomCode = "DEL-" + Math.floor(1000 + Math.random() * 9000);
+    setConfirmSecurityCode(randomCode);
+    setUserEnteredCode("");
+    setDeleteConfirmModalOpen(true);
+  };
+
+  const handleExecuteDeleteAll = async () => {
+    if (userEnteredCode.trim().toUpperCase() !== confirmSecurityCode.toUpperCase()) {
+      toast.error("Security code does not match! Deletion cancelled.");
+      return;
+    }
+
+    setDeletingAll(true);
+    try {
+      const res = await adminFetch(`/api/admin/expenses?deleteAll=true&projectId=${projectFilter}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`🎉 ${data.message || `Deleted ${data.count} expenses successfully`}`);
+        setDeleteConfirmModalOpen(false);
+        fetchExpenses();
+      } else {
+        toast.error(data.error || "Failed to delete expenses");
+      }
+    } catch {
+      toast.error("Network error while deleting records");
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
+  // ================= EXCEL SPREADSHEET ROW OPERATIONS =================
+  const addExcelRows = (count: number = 1) => {
+    const currentPId = projectFilter !== "all" ? projectFilter : "general-office";
+    const currentPName =
+      currentPId !== "general-office"
+        ? projects.find((p) => p._id === currentPId)?.title || "Project"
         : "General / Office Overhead";
 
-    return {
-      id: Math.random().toString(36).substring(2, 9),
-      date: new Date().toISOString().split("T")[0],
-      projectId: pId,
-      projectName: pName,
-      category: "civil-materials",
-      subCategory: "",
-      title: "",
-      amount: "",
-      paidTo: "",
-      paymentMethod: "cash",
-      voucherNo: "",
-      notes: "",
-    };
-  };
-
-  const handleOpenExcelView = () => {
-    if (excelRows.length === 0) {
-      setExcelRows([
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-        createEmptyRow(),
-      ]);
-    }
-    setActiveView("excel");
-  };
-
-  const addExcelRows = (count: number = 1) => {
     setExcelRows((prev) => {
       const newRows: ExcelRow[] = [];
       for (let i = 0; i < count; i++) {
-        newRows.push(createEmptyRow());
+        newRows.push({
+          id: Math.random().toString(36).substring(2, 9),
+          date: new Date().toISOString().split("T")[0],
+          projectId: currentPId,
+          projectName: currentPName,
+          category: "civil-materials",
+          subCategory: "",
+          title: "",
+          amount: "",
+          paidTo: "",
+          paymentMethod: "cash",
+          voucherNo: "",
+          notes: "",
+        });
       }
       return [...prev, ...newRows];
     });
@@ -392,7 +474,29 @@ export default function AdminExpensesPage() {
 
   const deleteExcelRow = (id: string) => {
     setExcelRows((prev) => {
-      if (prev.length <= 1) return [createEmptyRow()];
+      if (prev.length <= 1) {
+        const pId = projectFilter !== "all" ? projectFilter : "general-office";
+        const pName =
+          pId !== "general-office"
+            ? projects.find((p) => p._id === pId)?.title || "Project"
+            : "General / Office Overhead";
+        return [
+          {
+            id: Math.random().toString(36).substring(2, 9),
+            date: new Date().toISOString().split("T")[0],
+            projectId: pId,
+            projectName: pName,
+            category: "civil-materials",
+            subCategory: "",
+            title: "",
+            amount: "",
+            paidTo: "",
+            paymentMethod: "cash",
+            voucherNo: "",
+            notes: "",
+          },
+        ];
+      }
       return prev.filter((r) => r.id !== id);
     });
   };
@@ -445,10 +549,12 @@ export default function AdminExpensesPage() {
       "Notes",
     ];
 
+    const currentPName = activeProjectInfo?.title || projects[0]?.title || "General / Office Overhead";
+
     const sampleRows = [
       [
         "2026-09-22",
-        projects[0]?.title || "General / Office Overhead",
+        currentPName,
         "civil-materials",
         "rebar-steel",
         "5 Ton BSRM 16mm Rod for Grade Beam",
@@ -460,7 +566,7 @@ export default function AdminExpensesPage() {
       ],
       [
         "2026-09-22",
-        projects[0]?.title || "General / Office Overhead",
+        currentPName,
         "daily-labour",
         "general-labour-hazira",
         "Daily Labour Hazira (8 Persons)",
@@ -543,8 +649,9 @@ export default function AdminExpensesPage() {
 
           if (!titleVal && !amountVal) continue;
 
-          let matchedProjId = "general-office";
-          let matchedProjName = projVal || "General / Office Overhead";
+          let matchedProjId = projectFilter !== "all" ? projectFilter : "general-office";
+          let matchedProjName = activeProjectInfo?.title || projVal || "General / Office Overhead";
+
           const found = projects.find(
             (p) => p.title.toLowerCase().trim() === (projVal || "").toLowerCase().trim()
           );
@@ -702,11 +809,11 @@ export default function AdminExpensesPage() {
             </select>
           </div>
 
-          {/* Excel Full-Page Mode Button */}
+          {/* Excel Full-Page Mode Button (Requires Project Selected) */}
           <Button
             variant={activeView === "excel" ? "default" : "outline"}
             size="sm"
-            onClick={handleOpenExcelView}
+            onClick={() => handleInitiateEntry("excel")}
             className={`gap-1.5 text-xs font-bold ${
               activeView === "excel"
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -716,11 +823,11 @@ export default function AdminExpensesPage() {
             <Table className="w-4 h-4" /> Excel Sheet Entry
           </Button>
 
-          {/* Single Full-Page Entry Button */}
+          {/* Single Full-Page Entry Button (Requires Project Selected) */}
           <Button
             variant={activeView === "single" ? "default" : "outline"}
             size="sm"
-            onClick={handleOpenAdd}
+            onClick={() => handleInitiateEntry("single")}
             className="gap-1.5 text-xs font-bold"
           >
             <Plus className="w-4 h-4" /> Single Entry
@@ -736,7 +843,7 @@ export default function AdminExpensesPage() {
         </div>
       </div>
 
-      {/* KPI Financial Overview Cards (always visible for context) */}
+      {/* KPI Financial Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Outflow */}
         <Card className="border-rose-500/20 bg-rose-500/5">
@@ -750,9 +857,20 @@ export default function AdminExpensesPage() {
             <div className="text-2xl font-black text-rose-700">
               {formatBDT(projectFilter === "all" ? metrics.totalExpense : metrics.filteredTotal)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {projectFilter === "all" ? "Total recorded all costs" : "Cost for selected project"}
-            </p>
+            <div className="flex items-center justify-between mt-1 text-[11px] text-muted-foreground">
+              <span>{projectFilter === "all" ? "All recorded costs" : "Cost for selected project"}</span>
+              {/* Delete All Option in Summary */}
+              {expenses.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleOpenDeleteAllModal}
+                  className="text-destructive font-semibold hover:underline flex items-center gap-1 text-[11px]"
+                  title="Delete all expenses with security confirmation code"
+                >
+                  <Trash2 className="w-3 h-3" /> Clear All Data
+                </button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -816,7 +934,7 @@ export default function AdminExpensesPage() {
         </button>
 
         <button
-          onClick={handleOpenExcelView}
+          onClick={() => handleInitiateEntry("excel")}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
             activeView === "excel"
               ? "border-emerald-600 text-emerald-600"
@@ -828,7 +946,7 @@ export default function AdminExpensesPage() {
         </button>
 
         <button
-          onClick={handleOpenAdd}
+          onClick={() => handleInitiateEntry("single")}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
             activeView === "single"
               ? "border-accent text-accent"
@@ -867,6 +985,40 @@ export default function AdminExpensesPage() {
       {/* ================= VIEW 1: FULL-PAGE EXCEL SPREADSHEET BATCH ENTRY ================= */}
       {activeView === "excel" && (
         <div className="space-y-4">
+          {/* Active Project Auto-Fill Banner */}
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-emerald-600 text-white rounded-lg">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                  Active Project Auto-Filled For All Rows:
+                </span>
+                <h4 className="text-base font-black text-foreground flex items-center gap-2">
+                  {activeProjectInfo?.title || "General / Office Overhead"}
+                  {activeProjectInfo?.location && (
+                    <Badge variant="outline" className="text-xs font-normal">
+                      📍 {activeProjectInfo.location}
+                    </Badge>
+                  )}
+                </h4>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTargetEntryMode("excel");
+                setProjectSelectModalOpen(true);
+              }}
+              className="text-xs gap-1.5 h-8 font-bold border-emerald-500/30 text-emerald-800 hover:bg-emerald-100 bg-background"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Switch Project
+            </Button>
+          </div>
+
           <Card className="border-emerald-500/30 shadow-md">
             <CardHeader className="pb-3 border-b bg-card">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -935,7 +1087,7 @@ export default function AdminExpensesPage() {
                     <tr>
                       <th className="py-3 px-2 w-10 text-center">#</th>
                       <th className="py-3 px-2 w-32">Date *</th>
-                      <th className="py-3 px-2 w-48">Project *</th>
+                      <th className="py-3 px-2 w-48">Project (Auto-Filled) *</th>
                       <th className="py-3 px-2 w-44">Category *</th>
                       <th className="py-3 px-2 w-48">Sub-Category</th>
                       <th className="py-3 px-2 min-w-[220px]">Title / Item Description *</th>
@@ -973,10 +1125,10 @@ export default function AdminExpensesPage() {
                             />
                           </td>
 
-                          {/* Project */}
+                          {/* Project (Auto-Filled) */}
                           <td className="py-1.5 px-1">
                             <select
-                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
+                              className="w-full px-2 py-1.5 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-semibold text-emerald-800"
                               value={row.projectId}
                               onChange={(e) => updateExcelRow(row.id, "projectId", e.target.value)}
                             >
@@ -1169,6 +1321,40 @@ export default function AdminExpensesPage() {
       {/* ================= VIEW 2: FULL-PAGE SINGLE EXPENSE ENTRY FORM ================= */}
       {activeView === "single" && (
         <div className="space-y-4">
+          {/* Active Project Auto-Fill Banner */}
+          <div className="bg-accent/10 border border-accent/20 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-accent text-accent-foreground rounded-lg">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                  Active Project Auto-Selected:
+                </span>
+                <h4 className="text-base font-black text-foreground flex items-center gap-2">
+                  {formData.projectName || activeProjectInfo?.title || "General / Office Overhead"}
+                  {activeProjectInfo?.location && (
+                    <Badge variant="outline" className="text-xs font-normal">
+                      📍 {activeProjectInfo.location}
+                    </Badge>
+                  )}
+                </h4>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTargetEntryMode("single");
+                setProjectSelectModalOpen(true);
+              }}
+              className="text-xs gap-1.5 h-8 font-bold border-accent/30 text-accent hover:bg-accent/10 bg-background"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Switch Project
+            </Button>
+          </div>
+
           <Card className="shadow-md border-border">
             <CardHeader className="border-b pb-4 bg-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1206,11 +1392,11 @@ export default function AdminExpensesPage() {
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Project */}
+                    {/* Project (Pre-Filled) */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-foreground">Select Project *</Label>
+                      <Label className="text-xs font-bold text-foreground">Project (Auto-Selected) *</Label>
                       <select
-                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm font-semibold"
+                        className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm font-semibold text-accent"
                         value={formData.projectId}
                         onChange={(e) => {
                           const pId = e.target.value;
@@ -1528,10 +1714,14 @@ export default function AdminExpensesPage() {
                     Try changing your search or filter options, or click "Excel Sheet Entry" to enter multiple records fast.
                   </p>
                   <div className="flex justify-center gap-2 pt-1">
-                    <Button onClick={handleOpenExcelView} size="sm" className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button
+                      onClick={() => handleInitiateEntry("excel")}
+                      size="sm"
+                      className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
                       <Table className="w-4 h-4 mr-1" /> Excel Sheet Entry
                     </Button>
-                    <Button onClick={handleOpenAdd} size="sm" variant="outline">
+                    <Button onClick={() => handleInitiateEntry("single")} size="sm" variant="outline">
                       <Plus className="w-4 h-4 mr-1" /> Single Entry
                     </Button>
                   </div>
@@ -1832,6 +2022,151 @@ export default function AdminExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* ================= MODAL: MANDATORY PROJECT SELECTOR BEFORE ENTRY ================= */}
+      <Dialog open={projectSelectModalOpen} onOpenChange={setProjectSelectModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-accent" />
+              Select Project Before Data Entry
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              খরচ এন্ট্রি পেজে যাওয়ার পূর্বে প্রজেক্ট সিলেক্ট করুন। নির্বাচিত প্রজেক্টটি সকল সারিতে স্বয়ংক্রিয়ভাবে (Auto-Fill) যুক্ত থাকবে।
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2.5 mt-2 max-h-[60vh] overflow-y-auto pr-1">
+            {/* General Office Option */}
+            <div
+              onClick={() => proceedToEntry(targetEntryMode, "general-office")}
+              className="p-3 rounded-lg border border-border hover:border-accent/60 hover:bg-accent/5 cursor-pointer transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-muted rounded-md text-foreground">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">🏢 General / Office Overhead</h4>
+                  <p className="text-[11px] text-muted-foreground">অফিস ইউটিলিটি, সাধারণ বেতন ও বিবিধ খরচ</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+
+            {/* Active Projects List */}
+            <div className="pt-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                Active Projects ({projects.length})
+              </span>
+              <div className="space-y-2">
+                {projects.map((proj) => (
+                  <div
+                    key={proj._id}
+                    onClick={() => proceedToEntry(targetEntryMode, proj._id)}
+                    className="p-3 rounded-lg border border-border hover:border-emerald-500 hover:bg-emerald-500/5 cursor-pointer transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground group-hover:text-emerald-700 transition-colors">
+                        📍 {proj.title}
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {proj.category} {proj.location && `• ${proj.location}`}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ================= MODAL: DELETE ALL EXPENSES WITH SECURITY CODE ================= */}
+      <Dialog open={deleteConfirmModalOpen} onOpenChange={setDeleteConfirmModalOpen}>
+        <DialogContent className="max-w-md border-destructive/30">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="w-6 h-6" />
+              <DialogTitle className="text-lg font-bold text-destructive">
+                Security Confirmation Required
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              {projectFilter === "all" ? (
+                <span className="text-rose-600 font-semibold block">
+                  ⚠️ সতর্কবার্তা: আপনি সকল প্রজেক্টের সমস্ত খরচ স্থায়ীভাবে ডিলিট করতে যাচ্ছেন ({expenses.length} records, {formatBDT(metrics.totalExpense)})!
+                </span>
+              ) : (
+                <span className="text-rose-600 font-semibold block">
+                  ⚠️ সতর্কবার্তা: আপনি "{activeProjectInfo?.title}" প্রজেক্টের সমস্ত খরচ স্থায়ীভাবে ডিলিট করতে যাচ্ছেন ({expenses.length} records, {formatBDT(metrics.filteredTotal)})!
+                </span>
+              )}
+              এই কাজটি করলে কোনো ডাটা আর পুনরুদ্ধার করা যাবে না।
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-3">
+            {/* Safety Code Display */}
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-center space-y-1">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                নিরাপত্তা নিশ্চিতকরণ কোড (Security Code):
+              </span>
+              <div className="font-mono text-xl font-black text-destructive tracking-widest selection:bg-destructive selection:text-white">
+                {confirmSecurityCode}
+              </div>
+            </div>
+
+            {/* Code Input */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-accent" />
+                নিশ্চিত করতে হুবহু উপরের কোডটি লিখুন:
+              </Label>
+              <Input
+                value={userEnteredCode}
+                onChange={(e) => setUserEnteredCode(e.target.value)}
+                placeholder={`Type "${confirmSecurityCode}" here...`}
+                className="font-mono uppercase font-bold text-center tracking-wider text-base"
+                autoFocus
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteConfirmModalOpen(false)}
+                className="flex-1 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={
+                  deletingAll ||
+                  userEnteredCode.trim().toUpperCase() !== confirmSecurityCode.toUpperCase()
+                }
+                onClick={handleExecuteDeleteAll}
+                className="flex-1 text-xs font-bold gap-1.5"
+              >
+                {deletingAll ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" /> Permanently Delete
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
