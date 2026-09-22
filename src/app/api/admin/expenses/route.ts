@@ -204,6 +204,61 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     const body = await req.json();
+
+    // Support Bulk Insert (e.g. from Excel Spreadsheet Grid or CSV Import)
+    if (Array.isArray(body.items)) {
+      if (body.items.length === 0) {
+        return NextResponse.json({ error: "No expense items provided in batch" }, { status: 400 });
+      }
+
+      const preparedItems = [];
+      for (const item of body.items) {
+        if (!item.title || !item.amount || isNaN(Number(item.amount))) continue;
+
+        let resolvedProjectId = null;
+        let resolvedProjectName = item.projectName || "General / Office Overhead";
+
+        if (item.projectId && item.projectId !== "general-office" && mongoose.Types.ObjectId.isValid(item.projectId)) {
+          resolvedProjectId = new mongoose.Types.ObjectId(item.projectId);
+        }
+
+        preparedItems.push({
+          title: String(item.title).trim(),
+          category: item.category || "other",
+          subCategory: item.subCategory ? String(item.subCategory).trim() : "",
+          amount: Number(item.amount),
+          date: item.date ? new Date(item.date) : new Date(),
+          paidTo: item.paidTo ? String(item.paidTo).trim() : "",
+          paymentMethod: item.paymentMethod || "cash",
+          voucherNo: item.voucherNo ? String(item.voucherNo).trim() : "",
+          attachmentUrl: item.attachmentUrl ? String(item.attachmentUrl).trim() : "",
+          notes: item.notes ? String(item.notes).trim() : "",
+          projectId: resolvedProjectId,
+          projectName: resolvedProjectName,
+          projectRef: item.projectRef ? String(item.projectRef).trim() : "",
+          createdBy: (payload as any).email || "admin",
+        });
+      }
+
+      if (preparedItems.length === 0) {
+        return NextResponse.json({ error: "No valid rows to insert. Please check title and amount." }, { status: 400 });
+      }
+
+      const inserted = await Expense.insertMany(preparedItems);
+
+      try {
+        await ActivityLog.create({
+          action: "CREATE",
+          resource: "Expense",
+          performedBy: (payload as any).email || "admin",
+          details: `Bulk recorded ${inserted.length} expenses via Excel/Spreadsheet Entry`,
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true, count: inserted.length, inserted }, { status: 201 });
+    }
+
+    // Single item insertion
     const {
       title,
       category,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { 
   Receipt, 
   TrendingUp, 
@@ -20,11 +20,15 @@ import {
   ExternalLink,
   Printer,
   FileCheck2,
-  Coins,
+  Table,
+  Upload,
+  Copy,
+  PlusCircle,
+  FileSpreadsheet,
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +45,61 @@ import {
 
 function formatBDT(amount: number) {
   return "৳" + Number(amount || 0).toLocaleString("en-IN");
+}
+
+// CSV Parser supporting quotes and commas
+function parseCSV(text: string): string[][] {
+  const lines: string[][] = [];
+  let row: string[] = [];
+  let current = "";
+  let insideQuote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"') {
+      if (insideQuote && next === '"') {
+        current += '"';
+        i++;
+      } else {
+        insideQuote = !insideQuote;
+      }
+    } else if (char === ',' && !insideQuote) {
+      row.push(current.trim());
+      current = "";
+    } else if ((char === '\r' || char === '\n') && !insideQuote) {
+      if (char === '\r' && next === '\n') i++;
+      row.push(current.trim());
+      if (row.length > 1 || (row.length === 1 && row[0] !== "")) {
+        lines.push(row);
+      }
+      row = [];
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (current || row.length > 0) {
+    row.push(current.trim());
+    lines.push(row);
+  }
+  return lines;
+}
+
+interface ExcelRow {
+  id: string;
+  date: string;
+  projectId: string;
+  projectName: string;
+  category: string;
+  subCategory: string;
+  title: string;
+  amount: string;
+  paidTo: string;
+  paymentMethod: string;
+  voucherNo: string;
+  notes: string;
 }
 
 export default function AdminExpensesPage() {
@@ -66,10 +125,16 @@ export default function AdminExpensesPage() {
   const [monthFilter, setMonthFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
 
-  // Add / Edit Modal
+  // Single Add / Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Excel Spreadsheet Modal
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
+  const [excelRows, setExcelRows] = useState<ExcelRow[]>([]);
+  const [savingExcel, setSavingExcel] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialFormState = {
     title: "",
@@ -123,7 +188,7 @@ export default function AdminExpensesPage() {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  // Open modal for new expense
+  // Open modal for single expense
   const handleOpenAdd = () => {
     setEditingId(null);
     setFormData({
@@ -237,6 +302,299 @@ export default function AdminExpensesPage() {
     }
   };
 
+  // ================= EXCEL SPREADSHEET SYSTEM =================
+  const createEmptyRow = (defaultProjId?: string): ExcelRow => {
+    const pId = defaultProjId || (projectFilter !== "all" ? projectFilter : "general-office");
+    const pName =
+      pId !== "general-office"
+        ? projects.find((p) => p._id === pId)?.title || "Project"
+        : "General / Office Overhead";
+
+    return {
+      id: Math.random().toString(36).substring(2, 9),
+      date: new Date().toISOString().split("T")[0],
+      projectId: pId,
+      projectName: pName,
+      category: "civil-materials",
+      subCategory: "",
+      title: "",
+      amount: "",
+      paidTo: "",
+      paymentMethod: "cash",
+      voucherNo: "",
+      notes: "",
+    };
+  };
+
+  const handleOpenExcelModal = () => {
+    if (excelRows.length === 0) {
+      setExcelRows([createEmptyRow(), createEmptyRow(), createEmptyRow(), createEmptyRow(), createEmptyRow()]);
+    }
+    setExcelModalOpen(true);
+  };
+
+  const addExcelRows = (count: number = 1) => {
+    setExcelRows((prev) => {
+      const newRows: ExcelRow[] = [];
+      for (let i = 0; i < count; i++) {
+        newRows.push(createEmptyRow());
+      }
+      return [...prev, ...newRows];
+    });
+  };
+
+  const updateExcelRow = (id: string, field: keyof ExcelRow, value: string) => {
+    setExcelRows((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        if (field === "projectId") {
+          const p = projects.find((proj) => proj._id === value);
+          return {
+            ...r,
+            projectId: value,
+            projectName: p ? p.title : "General / Office Overhead",
+          };
+        }
+        if (field === "category") {
+          return {
+            ...r,
+            category: value,
+            subCategory: "", // reset subCategory when category changes
+          };
+        }
+        return { ...r, [field]: value };
+      })
+    );
+  };
+
+  const duplicateExcelRow = (index: number) => {
+    setExcelRows((prev) => {
+      const target = prev[index];
+      const copy: ExcelRow = {
+        ...target,
+        id: Math.random().toString(36).substring(2, 9),
+      };
+      const updated = [...prev];
+      updated.splice(index + 1, 0, copy);
+      return updated;
+    });
+  };
+
+  const deleteExcelRow = (id: string) => {
+    setExcelRows((prev) => {
+      if (prev.length <= 1) return [createEmptyRow()];
+      return prev.filter((r) => r.id !== id);
+    });
+  };
+
+  const handleSaveExcelBatch = async () => {
+    const validRows = excelRows.filter(
+      (r) => r.title.trim() !== "" && r.amount !== "" && Number(r.amount) > 0
+    );
+
+    if (validRows.length === 0) {
+      toast.error("Please fill in at least one row with a valid Title and Amount (BDT)");
+      return;
+    }
+
+    setSavingExcel(true);
+    try {
+      const res = await adminFetch("/api/admin/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: validRows }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`🎉 Successfully saved ${data.count} expenses in bulk!`);
+        setExcelModalOpen(false);
+        setExcelRows([]);
+        fetchExpenses();
+      } else {
+        toast.error(data.error || "Failed to save bulk expenses");
+      }
+    } catch {
+      toast.error("Network error while saving bulk entries");
+    } finally {
+      setSavingExcel(false);
+    }
+  };
+
+  const downloadSampleCSV = () => {
+    const sampleHeaders = [
+      "Date",
+      "Project",
+      "Category",
+      "SubCategory",
+      "Title",
+      "Amount",
+      "PaidTo",
+      "PaymentMethod",
+      "VoucherNo",
+      "Notes",
+    ];
+
+    const sampleRows = [
+      [
+        "2026-09-22",
+        projects[0]?.title || "General / Office Overhead",
+        "civil-materials",
+        "rebar-steel",
+        "5 Ton BSRM 16mm Rod for Grade Beam",
+        "485000",
+        "Anwar Steel Traders",
+        "bank",
+        "INV-9021",
+        "Site casting rebar",
+      ],
+      [
+        "2026-09-22",
+        projects[0]?.title || "General / Office Overhead",
+        "daily-labour",
+        "general-labour-hazira",
+        "Daily Labour Hazira (8 Persons)",
+        "6400",
+        "Abdur Rahim Mistri",
+        "cash",
+        "HZ-104",
+        "Soil leveling and cleaning",
+      ],
+      [
+        "2026-09-22",
+        "General / Office Overhead",
+        "sanitary-materials",
+        "cpvc-ppr-pipes",
+        "PPR Pipes 1 inch 10 Pcs",
+        "14500",
+        "Gazi Hardware",
+        "bkash",
+        "MEMO-881",
+        "Piping fittings",
+      ],
+    ];
+
+    const BOM = "\uFEFF";
+    const csvContent =
+      BOM +
+      sampleHeaders.join(",") +
+      "\n" +
+      sampleRows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `triple_h_sample_expense_template.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Sample Excel / CSV template downloaded!");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const rows = parseCSV(text);
+
+        if (rows.length < 2) {
+          toast.error("File is empty or contains no data rows");
+          return;
+        }
+
+        // Process rows (skip header if matches keywords)
+        let startIndex = 0;
+        const firstCol = rows[0][0]?.toLowerCase() || "";
+        if (firstCol.includes("date") || firstCol.includes("তারিখ") || firstCol.includes("sl")) {
+          startIndex = 1;
+        }
+
+        const newParsedRows: ExcelRow[] = [];
+        for (let i = startIndex; i < rows.length; i++) {
+          const r = rows[i];
+          if (r.length < 5) continue; // skip invalid line
+
+          const [
+            dateVal,
+            projVal,
+            catVal,
+            subCatVal,
+            titleVal,
+            amountVal,
+            paidToVal,
+            methodVal,
+            voucherVal,
+            notesVal,
+          ] = r;
+
+          if (!titleVal && !amountVal) continue;
+
+          // Find project if matching
+          let matchedProjId = "general-office";
+          let matchedProjName = projVal || "General / Office Overhead";
+          const found = projects.find(
+            (p) => p.title.toLowerCase().trim() === (projVal || "").toLowerCase().trim()
+          );
+          if (found) {
+            matchedProjId = found._id;
+            matchedProjName = found.title;
+          }
+
+          // Category fallback
+          const matchedCat = EXPENSE_CATEGORIES.some((c) => c.value === catVal)
+            ? catVal
+            : "civil-materials";
+
+          newParsedRows.push({
+            id: Math.random().toString(36).substring(2, 9),
+            date: dateVal || new Date().toISOString().split("T")[0],
+            projectId: matchedProjId,
+            projectName: matchedProjName,
+            category: matchedCat,
+            subCategory: subCatVal || "",
+            title: titleVal || "Expense",
+            amount: amountVal ? String(amountVal).replace(/[^0-9.]/g, "") : "",
+            paidTo: paidToVal || "",
+            paymentMethod: methodVal || "cash",
+            voucherNo: voucherVal || "",
+            notes: notesVal || "",
+          });
+        }
+
+        if (newParsedRows.length === 0) {
+          toast.error("No valid expense rows found in the uploaded file");
+          return;
+        }
+
+        setExcelRows(newParsedRows);
+        setExcelModalOpen(true);
+        toast.success(`Loaded ${newParsedRows.length} rows from file into Excel Grid! Review and save.`);
+      } catch (err) {
+        toast.error("Failed to parse the file. Please use the sample CSV format.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const excelCalculatedStats = useMemo(() => {
+    let count = 0;
+    let sum = 0;
+    excelRows.forEach((r) => {
+      const val = Number(r.amount);
+      if (r.title.trim() && !isNaN(val) && val > 0) {
+        count++;
+        sum += val;
+      }
+    });
+    return { count, sum };
+  }, [excelRows]);
+
   const downloadCSV = () => {
     if (expenses.length === 0) {
       toast.error("No expenses to export");
@@ -287,6 +645,15 @@ export default function AdminExpensesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Hidden file input for Excel/CSV import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".csv,text/csv,application/vnd.ms-excel"
+        className="hidden"
+      />
+
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4">
         <div>
@@ -328,14 +695,47 @@ export default function AdminExpensesPage() {
             </select>
           </div>
 
-          <Button variant="outline" size="sm" onClick={downloadCSV} className="gap-1 text-xs">
-            <Download className="w-4 h-4" /> CSV
+          {/* Excel Entry System Action Buttons */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleOpenExcelModal}
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+            title="Open Excel Spreadsheet Grid Entry"
+          >
+            <Table className="w-4 h-4" /> Excel Quick Entry
           </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="gap-1.5 text-xs font-semibold"
+            title="Import from Excel CSV File"
+          >
+            <Upload className="w-4 h-4 text-accent" /> Import CSV
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadSampleCSV}
+            className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+            title="Download blank sample Excel template"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Sample CSV
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={downloadCSV} className="gap-1 text-xs">
+            <Download className="w-4 h-4" /> Export CSV
+          </Button>
+
           <Button variant="outline" size="sm" onClick={printStatement} className="gap-1 text-xs">
             <Printer className="w-4 h-4" /> Print
           </Button>
+
           <Button onClick={handleOpenAdd} className="gap-1.5 font-bold bg-accent hover:bg-accent/90 text-xs sm:text-sm">
-            <Plus className="w-4 h-4" /> New Expense
+            <Plus className="w-4 h-4" /> Single Entry
           </Button>
         </div>
       </div>
@@ -537,11 +937,16 @@ export default function AdminExpensesPage() {
                   <Receipt className="w-12 h-12 text-muted-foreground/40 mx-auto" />
                   <p className="font-bold text-base">No expense records found</p>
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Try changing your search or filter options, or click "New Expense" to record a project cost.
+                    Try changing your search or filter options, or click "Excel Quick Entry" to enter multiple records fast.
                   </p>
-                  <Button onClick={handleOpenAdd} size="sm" className="font-bold bg-accent hover:bg-accent/90 mt-2">
-                    <Plus className="w-4 h-4 mr-1" /> Add Expense
-                  </Button>
+                  <div className="flex justify-center gap-2 pt-1">
+                    <Button onClick={handleOpenExcelModal} size="sm" className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Table className="w-4 h-4 mr-1" /> Excel Quick Entry
+                    </Button>
+                    <Button onClick={handleOpenAdd} size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-1" /> Single Entry
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -701,7 +1106,7 @@ export default function AdminExpensesPage() {
                     setActiveTab("transactions");
                   }}
                 >
-                  <CardHeader className="pb-2">
+                  <div className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <Badge variant="outline" className={`text-xs ${cat.color}`}>
                         {cat.label}
@@ -710,14 +1115,13 @@ export default function AdminExpensesPage() {
                         {spentData.count} entries
                       </span>
                     </div>
-                    <CardTitle className="text-sm font-bold mt-2 flex items-center justify-between">
-                      <span>{cat.labelBn}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-foreground">{cat.labelBn}</span>
                       <span className="text-base font-black text-foreground">
                         {formatBDT(spentData.total)}
                       </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
+                    </div>
+
                     {/* Progress Bar */}
                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
@@ -731,7 +1135,7 @@ export default function AdminExpensesPage() {
                         Filter <ArrowRight className="w-3 h-3" />
                       </span>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               );
             })}
@@ -841,7 +1245,295 @@ export default function AdminExpensesPage() {
         </div>
       )}
 
-      {/* Add / Edit Expense Dialog */}
+      {/* ================= MODAL 1: EXCEL SPREADSHEET BATCH ENTRY & IMPORT ================= */}
+      <Dialog open={excelModalOpen} onOpenChange={setExcelModalOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[92vh] flex flex-col p-6">
+          <DialogHeader className="pb-3 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                  <Table className="w-6 h-6 text-emerald-600" />
+                  Excel Spreadsheet Batch Data Entry (এক্সেল শিট এন্ট্রি সিস্টেম)
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  এক্সেল ফাইলের মতো একসাথে একাধিক সারি (Rows) এন্ট্রি দিন বা CSV ফাইল আপলোড করে এক ক্লিকে সেভ করুন।
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadSampleCSV}
+                  className="gap-1 text-xs text-emerald-700 hover:text-emerald-800"
+                >
+                  <Download className="w-3.5 h-3.5" /> Sample Template
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1 text-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Import CSV File
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => addExcelRows(1)}
+                  className="gap-1 text-xs font-semibold"
+                >
+                  <Plus className="w-3.5 h-3.5" /> +1 Row
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => addExcelRows(5)}
+                  className="gap-1 text-xs font-semibold"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> +5 Rows
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Excel Grid Table Body */}
+          <div className="flex-1 overflow-auto border rounded-lg mt-3">
+            <table className="w-full text-left text-xs border-collapse min-w-[1250px]">
+              <thead className="bg-muted/80 sticky top-0 z-10 border-b font-bold text-foreground text-[11px] uppercase shadow-sm">
+                <tr>
+                  <th className="py-2.5 px-2 w-10 text-center">#</th>
+                  <th className="py-2.5 px-2 w-32">Date *</th>
+                  <th className="py-2.5 px-2 w-44">Project *</th>
+                  <th className="py-2.5 px-2 w-40">Category *</th>
+                  <th className="py-2.5 px-2 w-44">Sub-Category</th>
+                  <th className="py-2.5 px-2 min-w-[200px]">Title / Item Description *</th>
+                  <th className="py-2.5 px-2 w-32 text-right">Amount (৳) *</th>
+                  <th className="py-2.5 px-2 w-36">Paid To (Vendor)</th>
+                  <th className="py-2.5 px-2 w-28">Method</th>
+                  <th className="py-2.5 px-2 w-28">Voucher #</th>
+                  <th className="py-2.5 px-2 w-40">Notes</th>
+                  <th className="py-2.5 px-2 w-16 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {excelRows.map((row, idx) => {
+                  const catDef = getCategoryDef(row.category);
+                  const isFilled = row.title.trim() !== "" && Number(row.amount) > 0;
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`hover:bg-muted/20 transition-colors ${
+                        isFilled ? "bg-emerald-500/[0.02]" : ""
+                      }`}
+                    >
+                      {/* Row Index */}
+                      <td className="py-1.5 px-2 text-center text-[11px] text-muted-foreground font-mono">
+                        {idx + 1}
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="date"
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                          value={row.date}
+                          onChange={(e) => updateExcelRow(row.id, "date", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Project */}
+                      <td className="py-1 px-1">
+                        <select
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
+                          value={row.projectId}
+                          onChange={(e) => updateExcelRow(row.id, "projectId", e.target.value)}
+                        >
+                          <option value="general-office">🏢 General Office</option>
+                          {projects.map((p) => (
+                            <option key={p._id} value={p._id}>
+                              📍 {p.title}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Category */}
+                      <td className="py-1 px-1">
+                        <select
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate font-medium"
+                          value={row.category}
+                          onChange={(e) => updateExcelRow(row.id, "category", e.target.value)}
+                        >
+                          {EXPENSE_CATEGORIES.map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.label} ({c.labelBn})
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Sub-Category */}
+                      <td className="py-1 px-1">
+                        <select
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent truncate"
+                          value={row.subCategory}
+                          onChange={(e) => updateExcelRow(row.id, "subCategory", e.target.value)}
+                        >
+                          <option value="">-- Sub Category --</option>
+                          {catDef?.subCategories.map((s) => (
+                            <option key={s.value} value={s.value}>
+                              {s.labelBn} / {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Title / Description */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="text"
+                          placeholder="e.g. 5 Ton BSRM 16mm Rod"
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent font-medium"
+                          value={row.title}
+                          onChange={(e) => updateExcelRow(row.id, "title", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Amount */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="number"
+                          placeholder="0"
+                          className="w-full px-2 py-1 bg-background border rounded text-xs text-right font-bold text-rose-600 focus:ring-1 focus:ring-accent"
+                          value={row.amount}
+                          onChange={(e) => updateExcelRow(row.id, "amount", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Paid To */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="text"
+                          placeholder="Vendor / Mistri"
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                          value={row.paidTo}
+                          onChange={(e) => updateExcelRow(row.id, "paidTo", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Method */}
+                      <td className="py-1 px-1">
+                        <select
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                          value={row.paymentMethod}
+                          onChange={(e) => updateExcelRow(row.id, "paymentMethod", e.target.value)}
+                        >
+                          <option value="cash">Cash</option>
+                          <option value="bank">Bank</option>
+                          <option value="bkash">bKash</option>
+                          <option value="nagad">Nagad</option>
+                          <option value="cheque">Cheque</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </td>
+
+                      {/* Voucher # */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="text"
+                          placeholder="INV-102"
+                          className="w-full px-2 py-1 bg-background border rounded text-xs font-mono focus:ring-1 focus:ring-accent"
+                          value={row.voucherNo}
+                          onChange={(e) => updateExcelRow(row.id, "voucherNo", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Notes */}
+                      <td className="py-1 px-1">
+                        <input
+                          type="text"
+                          placeholder="Remarks..."
+                          className="w-full px-2 py-1 bg-background border rounded text-xs focus:ring-1 focus:ring-accent"
+                          value={row.notes}
+                          onChange={(e) => updateExcelRow(row.id, "notes", e.target.value)}
+                        />
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-1 px-1 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => duplicateExcelRow(idx)}
+                            className="p-1 text-muted-foreground hover:text-accent rounded hover:bg-muted"
+                            title="Duplicate Row"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteExcelRow(row.id)}
+                            className="p-1 text-muted-foreground hover:text-destructive rounded hover:bg-destructive/10"
+                            title="Delete Row"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Modal Footer with Summary & Save */}
+          <div className="pt-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 mt-2">
+            <div className="flex items-center gap-4 text-xs">
+              <span className="font-semibold text-muted-foreground">
+                Total Rows: <span className="font-mono text-foreground font-bold">{excelRows.length}</span>
+              </span>
+              <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Valid Entries: <span className="font-mono font-black">{excelCalculatedStats.count}</span>
+              </span>
+              <span className="font-semibold text-rose-600">
+                Sum Amount: <span className="font-mono font-black text-sm">{formatBDT(excelCalculatedStats.sum)}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setExcelModalOpen(false)}
+                className="flex-1 sm:flex-initial text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveExcelBatch}
+                disabled={savingExcel || excelCalculatedStats.count === 0}
+                className="flex-1 sm:flex-initial font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow"
+              >
+                {savingExcel ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving Entries...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" /> Save {excelCalculatedStats.count} Records to Database
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ================= MODAL 2: SINGLE ADD / EDIT EXPENSE DIALOG ================= */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
