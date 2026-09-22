@@ -1,23 +1,20 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type ExpenseCategory =
-  | 'site-visit'
-  | 'rajuk-municipal'
-  | 'printing-plotting'
-  | 'staff-salary'
-  | 'office-utility'
-  | 'equipment-software'
-  | 'marketing'
-  | 'other';
+export type PaymentMethodType = 'cash' | 'bkash' | 'bank' | 'nagad' | 'cheque' | 'other';
 
 export interface IExpense extends Document {
   title: string;
-  category: ExpenseCategory;
+  category: string;
+  subCategory?: string;
   amount: number;
   date: Date;
   paidTo?: string;
-  paymentMethod: 'cash' | 'bkash' | 'bank' | 'nagad' | 'other';
+  paymentMethod: PaymentMethodType;
+  voucherNo?: string;
+  attachmentUrl?: string;
   notes?: string;
+  projectId?: mongoose.Types.ObjectId;
+  projectName?: string;
   projectRef?: string;
   createdBy: string;
   createdAt: Date;
@@ -35,17 +32,14 @@ const ExpenseSchema = new Schema<IExpense>(
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: [
-        'site-visit',
-        'rajuk-municipal',
-        'printing-plotting',
-        'staff-salary',
-        'office-utility',
-        'equipment-software',
-        'marketing',
-        'other',
-      ],
+      trim: true,
       default: 'other',
+      index: true,
+    },
+    subCategory: {
+      type: String,
+      trim: true,
+      default: '',
       index: true,
     },
     amount: {
@@ -62,20 +56,45 @@ const ExpenseSchema = new Schema<IExpense>(
     paidTo: {
       type: String,
       trim: true,
+      default: '',
     },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'bkash', 'bank', 'nagad', 'other'],
+      enum: ['cash', 'bkash', 'bank', 'nagad', 'cheque', 'other'],
       default: 'cash',
+    },
+    voucherNo: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
+    },
+    attachmentUrl: {
+      type: String,
+      trim: true,
+      default: '',
     },
     notes: {
       type: String,
       trim: true,
-      maxlength: [1000, 'Notes cannot exceed 1000 characters'],
+      maxlength: [1500, 'Notes cannot exceed 1500 characters'],
+    },
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
+      default: null,
+      index: true,
+    },
+    projectName: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
     },
     projectRef: {
       type: String,
       trim: true,
+      default: '',
     },
     createdBy: {
       type: String,
@@ -88,6 +107,7 @@ const ExpenseSchema = new Schema<IExpense>(
 );
 
 ExpenseSchema.index({ date: -1, category: 1 });
+ExpenseSchema.index({ projectId: 1, date: -1 });
 
 const Expense: Model<IExpense> =
   mongoose.models.Expense || mongoose.model<IExpense>('Expense', ExpenseSchema);
