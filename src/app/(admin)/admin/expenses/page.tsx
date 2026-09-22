@@ -33,7 +33,8 @@ import {
   ShieldAlert,
   AlertTriangle,
   KeyRound,
-  Check
+  Coins,
+  BadgePercent
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,13 +111,16 @@ interface ExcelRow {
 }
 
 export default function AdminExpensesPage() {
-  // Main view navigation: 'transactions' | 'excel' | 'single' | 'categories' | 'ledger'
-  const [activeView, setActiveView] = useState<"transactions" | "excel" | "single" | "categories" | "ledger">("transactions");
+  // Main view navigation: 'transactions' | 'excel' | 'single' | 'categories' | 'ledger' | 'deposits'
+  const [activeView, setActiveView] = useState<"transactions" | "excel" | "single" | "categories" | "ledger" | "deposits">("transactions");
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [funds, setFunds] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [projectLedger, setProjectLedger] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({
     totalIncome: 0,
+    totalPaymentIncome: 0,
+    totalFundDeposited: 0,
     totalExpense: 0,
     netProfit: 0,
     thisMonthExpense: 0,
@@ -142,6 +146,23 @@ export default function AdminExpensesPage() {
   const [confirmSecurityCode, setConfirmSecurityCode] = useState("");
   const [userEnteredCode, setUserEnteredCode] = useState("");
   const [deletingAll, setDeletingAll] = useState(false);
+
+  // Add Balance / Fund Deposit Modal
+  const [addBalanceModalOpen, setAddBalanceModalOpen] = useState(false);
+  const [submittingBalance, setSubmittingBalance] = useState(false);
+  const initialBalanceFormState = {
+    title: "",
+    projectId: "general-office",
+    projectName: "General / Office Overhead",
+    amount: "",
+    date: new Date().toISOString().split("T")[0],
+    source: "owner-equity",
+    depositedBy: "",
+    paymentMethod: "bank",
+    referenceNo: "",
+    notes: "",
+  };
+  const [balanceForm, setBalanceForm] = useState(initialBalanceFormState);
 
   // Single Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -189,8 +210,9 @@ export default function AdminExpensesPage() {
       if (res.ok) {
         const data = await res.json();
         setExpenses(data.expenses || []);
-        if (data.projects) setProjects(data.projects);
-        if (data.projectLedger) setProjectLedger(data.projectLedger);
+        if (data.funds) setFunds(data.funds || []);
+        if (data.projects) setProjects(data.projects || []);
+        if (data.projectLedger) setProjectLedger(data.projectLedger || []);
         if (data.metrics) setMetrics(data.metrics);
       }
     } catch {
@@ -214,14 +236,75 @@ export default function AdminExpensesPage() {
     return p ? { id: p._id, title: p.title, location: p.location } : null;
   }, [projectFilter, projects]);
 
+  // ================= BALANCE DEPOSIT HANDLER =================
+  const handleOpenAddBalance = () => {
+    const pId = projectFilter !== "all" ? projectFilter : "general-office";
+    const pName =
+      pId !== "general-office"
+        ? projects.find((p) => p._id === pId)?.title || "Project"
+        : "General / Office Overhead";
+
+    setBalanceForm({
+      ...initialBalanceFormState,
+      projectId: pId,
+      projectName: pName,
+    });
+    setAddBalanceModalOpen(true);
+  };
+
+  const handleSaveBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!balanceForm.title.trim() || !balanceForm.amount || Number(balanceForm.amount) <= 0) {
+      toast.error("Please provide a valid deposit title and amount");
+      return;
+    }
+
+    setSubmittingBalance(true);
+    try {
+      const res = await adminFetch("/api/admin/funds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...balanceForm,
+          amount: Number(balanceForm.amount),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`🎉 Balance of ৳${Number(balanceForm.amount).toLocaleString()} added successfully!`);
+        setAddBalanceModalOpen(false);
+        fetchExpenses();
+      } else {
+        toast.error(data.error || "Failed to add balance");
+      }
+    } catch {
+      toast.error("Network error while adding balance");
+    } finally {
+      setSubmittingBalance(false);
+    }
+  };
+
+  const handleDeleteFund = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to remove deposit record "${title}"?`)) return;
+    try {
+      const res = await adminFetch(`/api/admin/funds?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Deposit record removed");
+        fetchExpenses();
+      } else {
+        toast.error("Failed to delete deposit record");
+      }
+    } catch {
+      toast.error("Network error while deleting deposit");
+    }
+  };
+
   // MANDATORY PROJECT SELECTION HANDLER BEFORE ENTRY
   const handleInitiateEntry = (mode: "excel" | "single") => {
     if (projectFilter === "all") {
-      // Must select project first!
       setTargetEntryMode(mode);
       setProjectSelectModalOpen(true);
     } else {
-      // Already selected, proceed directly with auto-fill
       proceedToEntry(mode, projectFilter);
     }
   };
@@ -237,7 +320,6 @@ export default function AdminExpensesPage() {
     }
 
     if (mode === "excel") {
-      // Auto-fill all rows with this chosen project
       const newRows: ExcelRow[] = [];
       for (let i = 0; i < 8; i++) {
         newRows.push({
@@ -259,7 +341,6 @@ export default function AdminExpensesPage() {
       setActiveView("excel");
       toast.info(`Auto-filled all rows for project: "${pName}"`);
     } else {
-      // Auto-fill single form with this chosen project
       setEditingId(null);
       setFormData({
         ...initialSingleFormState,
@@ -780,7 +861,7 @@ export default function AdminExpensesPage() {
                 Project Expense & Accounts Manager
               </h1>
               <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 font-medium">
-                প্রজেক্ট খরচ, মালামাল, ঠিকাদার বিল, লেবার হাজিরা ও একাউন্ট ব্যালেন্স ট্র্যাকিং
+                প্রজেক্ট খরচ, মালামাল, ব্যালেন্স ফান্ড যোগ, লেবার হাজিরা ও একাউন্ট ব্যালেন্স ট্র্যাকিং
               </p>
             </div>
           </div>
@@ -809,6 +890,16 @@ export default function AdminExpensesPage() {
             </select>
           </div>
 
+          {/* ADD BALANCE / FUND BUTTON */}
+          <Button
+            size="sm"
+            onClick={handleOpenAddBalance}
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow"
+            title="Add Cash/Bank Balance Fund to Project or Office"
+          >
+            <Coins className="w-4 h-4" /> Add Balance (ব্যালেন্স যোগ)
+          </Button>
+
           {/* Excel Full-Page Mode Button (Requires Project Selected) */}
           <Button
             variant={activeView === "excel" ? "default" : "outline"}
@@ -816,8 +907,8 @@ export default function AdminExpensesPage() {
             onClick={() => handleInitiateEntry("excel")}
             className={`gap-1.5 text-xs font-bold ${
               activeView === "excel"
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "border-emerald-600/40 text-emerald-700 hover:bg-emerald-50"
+                ? "bg-accent text-accent-foreground"
+                : "border-accent/40 text-accent hover:bg-accent/10"
             }`}
           >
             <Table className="w-4 h-4" /> Excel Sheet Entry
@@ -845,7 +936,24 @@ export default function AdminExpensesPage() {
 
       {/* KPI Financial Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Outflow */}
+        {/* Total Inflow (Revenue + Funds) */}
+        <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold text-emerald-700 uppercase tracking-wider flex items-center justify-between">
+              Total Fund & Revenue Inflow
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-black text-emerald-700">{formatBDT(metrics.totalIncome)}</div>
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+              <span>Payments: {formatBDT(metrics.totalPaymentIncome)}</span>
+              <span className="font-semibold text-emerald-600">Fund: {formatBDT(metrics.totalFundDeposited)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Outflow (Expenses) */}
         <Card className="border-rose-500/20 bg-rose-500/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-semibold text-rose-700 uppercase tracking-wider flex items-center justify-between">
@@ -874,6 +982,22 @@ export default function AdminExpensesPage() {
           </CardContent>
         </Card>
 
+        {/* Available Balance / Cash in Hand */}
+        <Card className={metrics.netProfit >= 0 ? "border-primary/20 bg-primary/5" : "border-rose-500/30 bg-rose-500/10"}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider flex items-center justify-between">
+              Current Available Balance
+              <Wallet className="w-4 h-4 text-accent" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-black ${metrics.netProfit >= 0 ? "text-primary" : "text-rose-600"}`}>
+              {formatBDT(metrics.netProfit)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Available cash in hand / Surplus balance</p>
+          </CardContent>
+        </Card>
+
         {/* This Month Expenses */}
         <Card>
           <CardHeader className="pb-2">
@@ -885,36 +1009,6 @@ export default function AdminExpensesPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatBDT(metrics.thisMonthExpense)}</div>
             <p className="text-[11px] text-muted-foreground mt-1">Current month outflow</p>
-          </CardContent>
-        </Card>
-
-        {/* Total Collected Revenue */}
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-700 uppercase tracking-wider flex items-center justify-between">
-              Total Revenue Inflow
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-emerald-700">{formatBDT(metrics.totalIncome)}</div>
-            <p className="text-[11px] text-muted-foreground mt-1">Client payments collected</p>
-          </CardContent>
-        </Card>
-
-        {/* Overall Net Balance */}
-        <Card className={metrics.netProfit >= 0 ? "border-primary/20 bg-primary/5" : "border-rose-500/30 bg-rose-500/10"}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider flex items-center justify-between">
-              Net Margin / Profit
-              <Wallet className="w-4 h-4 text-accent" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-black ${metrics.netProfit >= 0 ? "text-primary" : "text-rose-600"}`}>
-              {formatBDT(metrics.netProfit)}
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">Revenue minus all project expenses</p>
           </CardContent>
         </Card>
       </div>
@@ -934,14 +1028,26 @@ export default function AdminExpensesPage() {
         </button>
 
         <button
-          onClick={() => handleInitiateEntry("excel")}
+          onClick={() => setActiveView("deposits")}
           className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
-            activeView === "excel"
+            activeView === "deposits"
               ? "border-emerald-600 text-emerald-600"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Table className="w-4 h-4 text-emerald-600" />
+          <Coins className="w-4 h-4 text-emerald-600" />
+          Balance Deposits ({funds.length})
+        </button>
+
+        <button
+          onClick={() => handleInitiateEntry("excel")}
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+            activeView === "excel"
+              ? "border-accent text-accent"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Table className="w-4 h-4 text-accent" />
           Excel Sheet Entry (Full Page)
         </button>
 
@@ -981,6 +1087,121 @@ export default function AdminExpensesPage() {
           Project Accounts Ledger
         </button>
       </div>
+
+      {/* ================= VIEW 0: BALANCE DEPOSITS LIST ================= */}
+      {activeView === "deposits" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+            <div>
+              <h2 className="text-base font-bold text-emerald-950 flex items-center gap-2">
+                <Coins className="w-5 h-5 text-emerald-600" />
+                Project Balance & Fund Deposits History (জমা ও তহবিলের খতিয়ান)
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                মালিকের নিজস্ব ডিপোজিট, ব্যাংক ফান্ডিং ও সাইট খরচের জন্য জমা হওয়া সমস্ত ব্যালেন্স
+              </p>
+            </div>
+
+            <Button
+              onClick={handleOpenAddBalance}
+              size="sm"
+              className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow"
+            >
+              <Coins className="w-4 h-4" /> + Add New Balance Deposit
+            </Button>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              {funds.length === 0 ? (
+                <div className="text-center py-20 space-y-3">
+                  <Coins className="w-12 h-12 text-muted-foreground/40 mx-auto" />
+                  <p className="font-bold text-base">No fund deposits recorded yet</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Click "Add Balance" to deposit cash or bank funds for your project or office overhead.
+                  </p>
+                  <Button
+                    onClick={handleOpenAddBalance}
+                    size="sm"
+                    className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white mt-1"
+                  >
+                    <Coins className="w-4 h-4 mr-1.5" /> Add Balance Fund
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="bg-muted/60 border-b border-border text-muted-foreground font-semibold uppercase text-[11px]">
+                      <tr>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Title & Description</th>
+                        <th className="py-3 px-4">Project</th>
+                        <th className="py-3 px-4">Fund Source</th>
+                        <th className="py-3 px-4">Deposited By & Method</th>
+                        <th className="py-3 px-4 text-right">Amount (BDT)</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {funds.map((fund) => (
+                        <tr key={fund._id} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-3 px-4 whitespace-nowrap text-foreground font-medium">
+                            {format(new Date(fund.date), "dd MMM yyyy")}
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="font-bold text-foreground">{fund.title}</p>
+                            {fund.referenceNo && (
+                              <span className="inline-block font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded mt-0.5">
+                                Ref: #{fund.referenceNo}
+                              </span>
+                            )}
+                            {fund.notes && (
+                              <p className="text-[11px] text-muted-foreground italic mt-0.5 truncate">
+                                "{fund.notes}"
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap font-medium text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span>{fund.projectName || "General Office"}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                              {fund.source}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <p className="font-semibold text-xs">{fund.depositedBy}</p>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {fund.paymentMethod}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap font-black text-emerald-600 text-sm sm:text-base">
+                            +{formatBDT(fund.amount)}
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteFund(fund._id, fund.title)}
+                              title="Delete Deposit"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* ================= VIEW 1: FULL-PAGE EXCEL SPREADSHEET BATCH ENTRY ================= */}
       {activeView === "excel" && (
@@ -1941,8 +2162,9 @@ export default function AdminExpensesPage() {
                         <th className="py-3 px-4">Project Name</th>
                         <th className="py-3 px-4">Category & Location</th>
                         <th className="py-3 px-4 text-right">Client Billed / Paid</th>
+                        <th className="py-3 px-4 text-right">Direct Funds</th>
                         <th className="py-3 px-4 text-right">Total Expenses</th>
-                        <th className="py-3 px-4 text-right">Gross Profit / Balance</th>
+                        <th className="py-3 px-4 text-right">Net Available Balance</th>
                         <th className="py-3 px-4 text-center">Status</th>
                         <th className="py-3 px-4 text-right">Action</th>
                       </tr>
@@ -1965,6 +2187,9 @@ export default function AdminExpensesPage() {
                             <td className="py-3 px-4 text-right font-bold text-emerald-600 whitespace-nowrap">
                               {formatBDT(proj.collectedRevenue)}
                             </td>
+                            <td className="py-3 px-4 text-right font-bold text-cyan-600 whitespace-nowrap">
+                              {formatBDT(proj.directFunds || 0)}
+                            </td>
                             <td className="py-3 px-4 text-right font-bold text-rose-600 whitespace-nowrap">
                               {formatBDT(proj.totalCost)}
                               <span className="text-[10px] block font-normal text-muted-foreground">
@@ -1979,9 +2204,9 @@ export default function AdminExpensesPage() {
                               >
                                 {formatBDT(proj.netMargin)}
                               </span>
-                              {proj.collectedRevenue > 0 && (
+                              {proj.totalInflow > 0 && (
                                 <span className="text-[10px] block font-semibold text-muted-foreground">
-                                  {proj.marginPercent}% margin
+                                  {proj.marginPercent}% surplus
                                 </span>
                               )}
                             </td>
@@ -2022,6 +2247,179 @@ export default function AdminExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* ================= MODAL: ADD BALANCE / FUND DEPOSIT ================= */}
+      <Dialog open={addBalanceModalOpen} onOpenChange={setAddBalanceModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-emerald-600 text-white rounded-lg">
+                <Coins className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold">Add Balance / Fund Deposit (ব্যালেন্স জমা)</DialogTitle>
+                <DialogDescription className="text-xs">
+                  প্রজেক্টে বা অফিস একাউন্টে ক্যাশ বা ব্যাংক ব্যালেন্স জমা করুন
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveBalance} className="space-y-4 mt-2">
+            {/* Project Selection */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground">Select Project / Account *</Label>
+              <select
+                className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm font-semibold"
+                value={balanceForm.projectId}
+                onChange={(e) => {
+                  const pId = e.target.value;
+                  const p = projects.find((proj) => proj._id === pId);
+                  setBalanceForm((prev) => ({
+                    ...prev,
+                    projectId: pId,
+                    projectName: p ? p.title : "General / Office Overhead",
+                  }));
+                }}
+              >
+                <option value="general-office">🏢 General / Office Overhead</option>
+                <optgroup label="Active Projects">
+                  {projects.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      📍 {p.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Deposit Title & Amount */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground">Deposit Description / Title *</Label>
+              <Input
+                required
+                value={balanceForm.title}
+                onChange={(e) => setBalanceForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g. Hasan Sir Cash Deposit for Piling / Client 1st Installment"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Deposit Amount (BDT ৳) *</Label>
+                <Input
+                  required
+                  type="number"
+                  min="1"
+                  value={balanceForm.amount}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, amount: e.target.value }))}
+                  placeholder="500000"
+                  className="font-black text-emerald-600 text-base"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Date of Deposit</Label>
+                <Input
+                  type="date"
+                  value={balanceForm.date}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Fund Source & Deposited By */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Fund Source (উৎস)</Label>
+                <select
+                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                  value={balanceForm.source}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, source: e.target.value }))}
+                >
+                  <option value="owner-equity">Owner Deposit (মালিকের ডিপোজিট)</option>
+                  <option value="client-payment">Client Advance / Installment (ক্লায়েন্ট পেমেন্ট)</option>
+                  <option value="bank-deposit">Bank Deposit (ব্যাংক ট্রান্সফার)</option>
+                  <option value="cash-advance">Cash Advance (সাইট ক্যাশ অগ্রিম)</option>
+                  <option value="loan-borrowing">Loan / Borrowing (ঋণ / ধার)</option>
+                  <option value="other">Other Source (অন্যান্য)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Deposited By (প্রদানকারী ব্যক্তি)</Label>
+                <Input
+                  value={balanceForm.depositedBy}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, depositedBy: e.target.value }))}
+                  placeholder="e.g. Engr. Hasan / Client Name"
+                />
+              </div>
+            </div>
+
+            {/* Payment Method & Ref No */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Payment Method</Label>
+                <select
+                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm"
+                  value={balanceForm.paymentMethod}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                >
+                  <option value="bank">Bank Transfer (ব্যাংক ট্রান্সফার)</option>
+                  <option value="cheque">Cheque (চেক)</option>
+                  <option value="cash">Cash (নগদ ক্যাশ)</option>
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-foreground">Receipt / Ref # (রসিদ/চেক নং)</Label>
+                <Input
+                  value={balanceForm.referenceNo}
+                  onChange={(e) => setBalanceForm((prev) => ({ ...prev, referenceNo: e.target.value }))}
+                  placeholder="e.g. CHQ-9921 / TR-819"
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground">Notes / Remarks</Label>
+              <Input
+                value={balanceForm.notes}
+                onChange={(e) => setBalanceForm((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Bank name, branch, or deposit purpose remarks"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAddBalanceModalOpen(false)}
+                className="flex-1 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submittingBalance}
+                className="flex-1 font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 shadow"
+              >
+                {submittingBalance ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Coins className="w-4 h-4" />
+                )}
+                Save Deposit & Add Balance
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ================= MODAL: MANDATORY PROJECT SELECTOR BEFORE ENTRY ================= */}
       <Dialog open={projectSelectModalOpen} onOpenChange={setProjectSelectModalOpen}>

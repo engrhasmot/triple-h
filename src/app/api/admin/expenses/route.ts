@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import Expense from "@/models/expense.model";
 import Payment from "@/models/payment.model";
 import Project from "@/models/project.model";
+import ProjectFund from "@/models/project-fund.model";
 import ActivityLog from "@/models/activity-log.model";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
 import mongoose from "mongoose";
@@ -73,17 +74,20 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const [expenses, allPayments, allExpenses, projects] = await Promise.all([
+    const [expenses, allPayments, allExpenses, projects, allFunds] = await Promise.all([
       Expense.find(filter).sort({ date: -1 }).lean(),
       Payment.find({}).select("clientName projectTitle paidAmount totalAmount").lean(),
       Expense.find({}).select("amount category subCategory date projectId projectName").lean(),
       Project.find({}).select("_id title category location status").sort({ title: 1 }).lean(),
+      ProjectFund.find({}).sort({ date: -1 }).lean(),
     ]);
 
     // Financial Metrics
-    const totalIncome = allPayments.reduce((acc, p) => acc + (p.paidAmount || 0), 0);
-    const totalExpense = allExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-    const netProfit = totalIncome - totalExpense;
+    const totalPaymentIncome = allPayments.reduce((acc, p) => acc + (p.paidAmount || 0), 0);
+    const totalFundDeposited = allFunds.reduce((acc, f) => acc + (f.amount || 0), 0);
+    const totalIncome = totalPaymentIncome + totalFundDeposited; // All Inflow
+    const totalExpense = allExpenses.reduce((acc, e) => acc + (e.amount || 0), 0); // All Outflow
+    const netProfit = totalIncome - totalExpense; // Remaining Available Balance / Cash in hand
 
     // Filtered expenses total
     const filteredTotal = expenses.reduce((acc: number, e: any) => acc + (e.amount || 0), 0);
@@ -139,13 +143,22 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    // Match direct fund deposits with projects
+    const projectFundMap: Record<string, number> = {};
+    allFunds.forEach((f: any) => {
+      const fPid = f.projectId ? f.projectId.toString() : "general-office";
+      projectFundMap[fPid] = (projectFundMap[fPid] || 0) + (f.amount || 0);
+    });
+
     const projectLedger = projects.map((proj: any) => {
       const pid = proj._id.toString();
       const pTitleNorm = (proj.title || "").trim().toLowerCase();
       const costInfo = projectCostMap[pid] || { totalCost: 0, count: 0, name: proj.title };
       const collectedRevenue = projectPaymentMap[pTitleNorm] || 0;
-      const netMargin = collectedRevenue - costInfo.totalCost;
-      const marginPercent = collectedRevenue > 0 ? Math.round((netMargin / collectedRevenue) * 100) : 0;
+      const directFunds = projectFundMap[pid] || 0;
+      const totalInflow = collectedRevenue + directFunds;
+      const netMargin = totalInflow - costInfo.totalCost;
+      const marginPercent = totalInflow > 0 ? Math.round((netMargin / totalInflow) * 100) : 0;
 
       return {
         projectId: pid,
@@ -155,6 +168,8 @@ export async function GET(req: NextRequest) {
         totalCost: costInfo.totalCost,
         expenseCount: costInfo.count,
         collectedRevenue,
+        directFunds,
+        totalInflow,
         netMargin,
         marginPercent,
       };
@@ -162,6 +177,7 @@ export async function GET(req: NextRequest) {
 
     // General Office Ledger entry
     const officeCost = projectCostMap["general-office"] || { totalCost: 0, count: 0, name: "General / Office Overhead" };
+    const officeFund = projectFundMap["general-office"] || 0;
     projectLedger.unshift({
       projectId: "general-office",
       title: "General / Office Overhead",
@@ -170,16 +186,32 @@ export async function GET(req: NextRequest) {
       totalCost: officeCost.totalCost,
       expenseCount: officeCost.count,
       collectedRevenue: 0,
-      netMargin: -officeCost.totalCost,
+      directFunds: officeFund,
+      totalInflow: officeFund,
+      netMargin: officeFund - officeCost.totalCost,
       marginPercent: 0,
+    });
+
+    // Relevant funds for current filter
+    const currentFunds = allFunds.filter((f: any) => {
+      if (projectId && projectId !== "all") {
+        if (projectId === "general-office") {
+          return !f.projectId || f.projectName === "General / Office Overhead";
+        }
+        return f.projectId?.toString() === projectId;
+      }
+      return true;
     });
 
     return NextResponse.json({
       success: true,
       expenses,
       projects,
+      funds: currentFunds,
       metrics: {
         totalIncome,
+        totalPaymentIncome,
+        totalFundDeposited,
         totalExpense,
         netProfit,
         thisMonthExpense,
